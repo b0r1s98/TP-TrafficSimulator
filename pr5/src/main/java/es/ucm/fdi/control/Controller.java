@@ -1,4 +1,4 @@
-package es.ucm.fdi.controller;
+package es.ucm.fdi.control;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
-import es.ucm.fdi.events.*;
+import es.ucm.fdi.model.events.*;
 import es.ucm.fdi.ini.Ini;
 import es.ucm.fdi.ini.IniError;
 import es.ucm.fdi.ini.IniSection;

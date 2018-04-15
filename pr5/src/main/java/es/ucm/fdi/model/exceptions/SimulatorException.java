@@ -1,4 +1,4 @@
-package es.ucm.fdi.exceptions;
+package es.ucm.fdi.model.exceptions;
 
 @SuppressWarnings("serial")
 public class SimulatorException extends RuntimeException {

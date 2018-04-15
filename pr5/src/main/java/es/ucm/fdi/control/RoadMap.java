@@ -1,8 +1,8 @@
-package es.ucm.fdi.controller;
+package es.ucm.fdi.control;
 
 import java.util.*;
 
-import es.ucm.fdi.simobject.*;
+import es.ucm.fdi.model.simobject.*;
 
 public class RoadMap {
 	private List<Vehicle> vehicles;

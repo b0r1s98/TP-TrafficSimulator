@@ -18,6 +18,7 @@ import javax.swing.SwingUtilities;
  * de vista de mantenibilidad.
  */
 
+@SuppressWarnings("serial")
 public class SimWindow extends JFrame {
 	public SimWindow() {
 		super("Prueba 123");

@@ -1,4 +1,4 @@
-package es.ucm.fdi.events;
+package es.ucm.fdi.model.events;
 
 import static org.junit.Assert.fail;
 
@@ -8,8 +8,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import es.ucm.fdi.controller.RoadMap;
-import es.ucm.fdi.simobject.Junction;
+import es.ucm.fdi.control.RoadMap;
+import es.ucm.fdi.model.simobject.Junction;
 
 public class NewJunctionEventTest {
 	@Test

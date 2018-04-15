@@ -1,4 +1,4 @@
-package es.ucm.fdi.simobject;
+package es.ucm.fdi.model.simobject;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import es.ucm.fdi.exceptions.SimulatorException;
+import es.ucm.fdi.model.exceptions.SimulatorException;
 
 public class Junction extends SimObject {
 	protected Map<Road, IncomingRoad> saberInc;

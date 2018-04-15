@@ -1,8 +1,8 @@
-package es.ucm.fdi.events;
+package es.ucm.fdi.model.events;
 
 import java.util.Map;
 
-import es.ucm.fdi.controller.RoadMap;
+import es.ucm.fdi.control.RoadMap;
 
 public abstract class Event {
 	private int time;

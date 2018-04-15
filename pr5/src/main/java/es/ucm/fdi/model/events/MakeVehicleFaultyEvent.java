@@ -1,10 +1,10 @@
-package es.ucm.fdi.events;
+package es.ucm.fdi.model.events;
 
 import java.util.Map;
 
-import es.ucm.fdi.controller.RoadMap;
-import es.ucm.fdi.exceptions.SimulatorException;
-import es.ucm.fdi.simobject.Vehicle;
+import es.ucm.fdi.control.RoadMap;
+import es.ucm.fdi.model.exceptions.SimulatorException;
+import es.ucm.fdi.model.simobject.Vehicle;
 
 public class MakeVehicleFaultyEvent extends Event {
 	

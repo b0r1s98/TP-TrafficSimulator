@@ -1,18 +1,18 @@
-package es.ucm.fdi.events;
+package es.ucm.fdi.model.events;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
 
-import es.ucm.fdi.controller.RoadMap;
-import es.ucm.fdi.simobject.Junction;
+import es.ucm.fdi.control.RoadMap;
+import es.ucm.fdi.model.simobject.Junction;
 
-public class NewDirtEventTest {
+public class NewHighwayEventTest {
 	@Test
-	public void newDirtEventTest() {
+	public void newHighwayEventTest() {
 		try {
 			Map<String, String> test = new LinkedHashMap<>();
 			test.put("time", "-1");
@@ -21,9 +21,9 @@ public class NewDirtEventTest {
 			test.put("src", "j1");
 			test.put("dest", "j2");
 			test.put("length", "30");
-			test.put("typè", "dirt");
-
-			NewDirtEvent.Builder r = new NewDirtEvent.Builder();
+			test.put("typè", "lanes");
+			test.put("lanes", "2");
+			NewHighwayEvent.Builder r = new NewHighwayEvent.Builder();
 			r.fill(test);
 			fail("Se esperaba excepción por tiempo no válido\n");
 
@@ -38,9 +38,9 @@ public class NewDirtEventTest {
 			test.put("src", "j1");
 			test.put("dest", "j2");
 			test.put("length", "30");
-			test.put("typè", "dirt");
-
-			NewDirtEvent.Builder r = new NewDirtEvent.Builder();
+			test.put("typè", "lanes");
+			test.put("lanes", "2");
+			NewHighwayEvent.Builder r = new NewHighwayEvent.Builder();
 			r.fill(test);
 			fail("Se esperaba excepción por id no válida\n");
 
@@ -55,8 +55,9 @@ public class NewDirtEventTest {
 			test.put("src", "j1");
 			test.put("dest", "j2");
 			test.put("length", "30");
-			test.put("typè", "dirt");
-			NewDirtEvent.Builder r = new NewDirtEvent.Builder();
+			test.put("typè", "lanes");
+			test.put("lanes", "2");
+			NewHighwayEvent.Builder r = new NewHighwayEvent.Builder();
 			r.fill(test);
 			fail("Se esperaba excepción por velocidad no válida.\n");
 
@@ -71,8 +72,9 @@ public class NewDirtEventTest {
 			test.put("src", "j1");
 			test.put("dest", "j2");
 			test.put("length", "30");
-			test.put("typè", "dirt");
-			NewDirtEvent.Builder r = new NewDirtEvent.Builder();
+			test.put("typè", "lanes");
+			test.put("lanes", "2");
+			NewHighwayEvent.Builder r = new NewHighwayEvent.Builder();
 			Event e = r.fill(test);
 			RoadMap s = new RoadMap();
 			s.addJunction(new Junction("j1"));

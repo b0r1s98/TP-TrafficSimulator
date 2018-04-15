@@ -1,24 +1,28 @@
-package es.ucm.fdi.events;
+package es.ucm.fdi.model.events;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
 
-import es.ucm.fdi.controller.RoadMap;
-import es.ucm.fdi.simobject.Junction;
+import es.ucm.fdi.control.RoadMap;
+import es.ucm.fdi.model.simobject.Junction;
 
-public class NewMostCrowedEventTest {
+public class NewRoundRobinEventTest {
 	@Test
-	public void newMostCrowedEventTest() {
+	public void newRoundRobinEventTest() {
+
 		try {
 			Map<String, String> test = new LinkedHashMap<>();
 			test.put("time", "-1");
 			test.put("id", "j1");
-			test.put("type", "mc");
-			NewMostCrowedEvent.Builder r = new NewMostCrowedEvent.Builder();
+			test.put("type", "rr");
+			test.put("max_time_slice", "10");
+			test.put("min_time_slice", "5");
+
+			NewRoundRobinEvent.Builder r = new NewRoundRobinEvent.Builder();
 			r.fill(test);
 			fail("Se esperaba excepción por tiempo no válido\n");
 
@@ -29,8 +33,11 @@ public class NewMostCrowedEventTest {
 			Map<String, String> test = new LinkedHashMap<>();
 			test.put("time", "0");
 			test.put("id", "j-1");
-			test.put("type", "mc");
-			NewMostCrowedEvent.Builder r = new NewMostCrowedEvent.Builder();
+			test.put("type", "rr");
+			test.put("max_time_slice", "10");
+			test.put("min_time_slice", "5");
+
+			NewRoundRobinEvent.Builder r = new NewRoundRobinEvent.Builder();
 			r.fill(test);
 			fail("Se esperaba excepción por id no válida\n");
 
@@ -42,8 +49,11 @@ public class NewMostCrowedEventTest {
 			Map<String, String> test = new LinkedHashMap<>();
 			test.put("time", "0");
 			test.put("id", "j1");
-			test.put("type", "mc");
-			NewMostCrowedEvent.Builder r = new NewMostCrowedEvent.Builder();
+			test.put("type", "rr");
+			test.put("max_time_slice", "10");
+			test.put("min_time_slice", "5");
+
+			NewRoundRobinEvent.Builder r = new NewRoundRobinEvent.Builder();
 			Event e = r.fill(test);
 			RoadMap s = new RoadMap();
 			e.execute(s);
@@ -55,8 +65,11 @@ public class NewMostCrowedEventTest {
 			Map<String, String> test = new LinkedHashMap<>();
 			test.put("time", "0");
 			test.put("id", "j1");
-			test.put("type", "mc");
-			NewMostCrowedEvent.Builder r = new NewMostCrowedEvent.Builder();
+			test.put("type", "rr");
+			test.put("max_time_slice", "10");
+			test.put("min_time_slice", "5");
+
+			NewRoundRobinEvent.Builder r = new NewRoundRobinEvent.Builder();
 			Event e = r.fill(test);
 			RoadMap s = new RoadMap();
 			s.addJunction(new Junction("j1"));
@@ -65,5 +78,4 @@ public class NewMostCrowedEventTest {
 		} catch (Exception e) {
 		}
 	}
-
 }

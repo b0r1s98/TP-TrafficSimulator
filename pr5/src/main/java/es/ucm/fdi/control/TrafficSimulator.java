@@ -1,15 +1,13 @@
-package es.ucm.fdi.controller;
+package es.ucm.fdi.control;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 
-import es.ucm.fdi.events.Event;
+import es.ucm.fdi.model.events.Event;
 import es.ucm.fdi.ini.Ini;
 import es.ucm.fdi.ini.IniSection;
-import es.ucm.fdi.simobject.Junction;
-import es.ucm.fdi.simobject.Road;
-import es.ucm.fdi.simobject.SimObject;
+import es.ucm.fdi.model.simobject.*;
 import es.ucm.fdi.util.MultiTreeMap;
 
 public class TrafficSimulator {

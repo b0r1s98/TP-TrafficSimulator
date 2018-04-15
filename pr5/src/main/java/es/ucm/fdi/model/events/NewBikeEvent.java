@@ -1,14 +1,14 @@
-package es.ucm.fdi.events;
+package es.ucm.fdi.model.events;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import es.ucm.fdi.controller.RoadMap;
-import es.ucm.fdi.exceptions.SimulatorException;
-import es.ucm.fdi.simobject.Bike;
-import es.ucm.fdi.simobject.Junction;
-import es.ucm.fdi.simobject.Vehicle;
+import es.ucm.fdi.control.RoadMap;
+import es.ucm.fdi.model.exceptions.SimulatorException;
+import es.ucm.fdi.model.simobject.Bike;
+import es.ucm.fdi.model.simobject.Junction;
+import es.ucm.fdi.model.simobject.Vehicle;
 
 public class NewBikeEvent extends NewVehicleEvent {
 
