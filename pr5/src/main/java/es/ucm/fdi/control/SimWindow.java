@@ -9,19 +9,11 @@ import javax.swing.JMenuBar;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
-/**
- * Esto es sólo para empezar a jugar con las interfaces
- * de la P5. 
- * 
- * El código <i>no</i> está bien organizado, y meter toda
- * la funcionalidad aquí sería un disparate desde un punto
- * de vista de mantenibilidad.
- */
 
 @SuppressWarnings("serial")
 public class SimWindow extends JFrame {
 	public SimWindow() {
-		super("Prueba 123");
+		super("Traffic Simulator");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		addBars();

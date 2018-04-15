@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 
+import javax.swing.SwingUtilities;
+
 import es.ucm.fdi.model.events.Event;
 import es.ucm.fdi.ini.Ini;
 import es.ucm.fdi.ini.IniSection;
@@ -16,15 +18,14 @@ public class TrafficSimulator {
 	private int timeCounter;
 
 	public TrafficSimulator() {
-		this.objects = new RoadMap();
-		this.events = new MultiTreeMap<>();
-		this.timeCounter = 0;
+		reset();
 	}
 
 	public void addEvent(Event e) {
 		if (e.getTime() < timeCounter)
 			throw new IllegalArgumentException("We don't travel back in time!");
 		events.putValue(e.getTime(), e);
+		fireUpdateEvent(EventType.NEW_EVENT, "");
 	}
 
 	public void run(int numSteps, OutputStream out) throws IOException {
@@ -38,14 +39,15 @@ public class TrafficSimulator {
 			for (Road r : roads)
 				r.avanza();
 			List<Junction> junctions = objects.getJunctions();
-			
+
 			for (Junction j : junctions)
 				j.avanza();
 			timeCounter++;
+			fireUpdateEvent(EventType.ADVANCED, "");
 			generateReport(out);
 		}
 	}
-	
+
 	private void addSectionsFor(List<? extends SimObject> it, Ini report) {
 		for (SimObject j : it) {
 			Map<String, String> map = j.report(timeCounter);
@@ -62,5 +64,65 @@ public class TrafficSimulator {
 		addSectionsFor(objects.getRoads(), report);
 		addSectionsFor(objects.getVehicles(), report);
 		report.store(out);
+	}
+
+	// Nuevo -------------------------------------------------------------
+	
+	public void reset(){
+		this.objects = new RoadMap();
+		this.events = new MultiTreeMap<>();
+		this.timeCounter = 0;
+		fireUpdateEvent(EventType.RESET, "");
+	}
+
+	private List<Listener> listeners = new ArrayList<>();
+
+	public void addSimulatorListener(Listener l) {
+		listeners.add(l);
+		UpdateEvent ue = new UpdateEvent(EventType.REGISTERED);
+		SwingUtilities.invokeLater(()->l.update(ue, ""));
+	}
+
+	public void removeListener(Listener l) {
+		listeners.remove(l);
+	}
+
+	private void fireUpdateEvent(EventType type, String error) {
+		UpdateEvent ue = new UpdateEvent(type);
+		for(Listener l : listeners){
+			l.update(ue, error);
+		}
+	}
+
+	public interface Listener {
+		void update(UpdateEvent ue, String error);
+	}
+
+	public enum EventType {
+		REGISTERED, RESET, NEW_EVENT, ADVANCED, ERROR;
+	}
+
+	public class UpdateEvent {
+		private EventType event;
+		
+		public UpdateEvent(EventType event) {
+			this.event = event;
+		}
+
+		public EventType getEvent() {
+			return event;
+		}
+
+		public RoadMap getRoadMap() {
+			return objects;
+		}
+
+		public List<Event> getEvenQueue() {
+			return events.get(timeCounter);
+		}
+
+		public int getCurrentTime() {
+			return timeCounter;
+		}
 	}
 }
