@@ -4,31 +4,44 @@ import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
 import javax.swing.Action;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
+import es.ucm.fdi.control.Controller;
 import es.ucm.fdi.control.SimulatorAction;
+import es.ucm.fdi.control.TrafficSimulator;
+import es.ucm.fdi.control.TrafficSimulator.Listener;
+import es.ucm.fdi.control.TrafficSimulator.UpdateEvent;
 import es.ucm.fdi.model.Describable;
 
 @SuppressWarnings("serial")
-public class SimWindow extends JPanel {
+public class SimWindow extends JPanel implements Listener{
 
 	private JFileChooser fc;
+	private JTextField time;
+	private JSpinner cicles;
+	
 	private JTextArea eventsEditor;
 	private JTable eventsQueue;
 	private JTextArea reports;
@@ -36,11 +49,24 @@ public class SimWindow extends JPanel {
 	private JTable roads;
 	private JTable junctions;
 	private GraphComponent graphComp;
+	//Grafo
+	//Barra de estado
+	
+	private Controller controller;
+	private OutputStream out;
 	
 
-	public SimWindow() {
+	public SimWindow(Controller controller, String file, Integer ticks) {
 		super();
+		this.controller = controller;
+		
 		initGUI();
+		
+		controller.getSimulator().addSimulatorListener(this);
+		if(file != null) loadFromString(file);
+		setTime(ticks);
+		out = new OutputStreamGUI(reports);
+		controller.setOutputStream(out);
 	}
 
 	private void initGUI() {
@@ -62,7 +88,10 @@ public class SimWindow extends JPanel {
 		
 		this.add(topSplit, BorderLayout.CENTER);
 		
-		//Añadir barra de abajo
+		//Arreglar esto -----------------------
+		JLabel status = new JLabel();
+		status.setText("");
+		jframe.add(status, BorderLayout.PAGE_END);
 
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jframe.setSize(1000, 1000);
@@ -153,9 +182,9 @@ public class SimWindow extends JPanel {
 	}
 	
 	enum Command {
-		LoadEvents("Load Events"), SaveEvents("Save Events"), CleanEvents("Clean Events"),
+		LoadEvents("Load Events"), SaveEvents("Save Events"), ClearEvents("Clear Events"),
 		InsertEvents("Insert events"), Run("Run"), Reset("Reset"),
-		GenerateReports("Generate"), CleanReports("Clear"),
+		GenerateReports("Generate"), ClearReports("Clear"),
 		SaveReport("Save Report"), Exit("Exit");
 		
 		private String text;
@@ -174,7 +203,7 @@ public class SimWindow extends JPanel {
 
 		SimulatorAction loadEvents = new SimulatorAction(Command.LoadEvents, "open.png",
 				"Cargar un fichero de eventos", KeyEvent.VK_L, "control O",
-				() -> loadFile(eventsEditor));
+				() -> loadFile());
 		loadEvents.register(this);
 
 		SimulatorAction saveEvents = new SimulatorAction(Command.SaveEvents, "save.png",
@@ -182,7 +211,7 @@ public class SimWindow extends JPanel {
 				() -> saveFile(eventsEditor));
 		saveEvents.register(this);
 
-		SimulatorAction cleanEvents = new SimulatorAction(Command.CleanEvents,
+		SimulatorAction cleanEvents = new SimulatorAction(Command.ClearEvents,
 				"clear.png", "Limpiar la zona de eventos", KeyEvent.VK_S,
 				"control S", () -> eventsEditor.setText(""));
 		cleanEvents.register(this);
@@ -207,7 +236,7 @@ public class SimWindow extends JPanel {
 				"control S", () -> generateReports());
 		generateReports.register(this);
 		
-		SimulatorAction cleanReports = new SimulatorAction(Command.CleanReports,
+		SimulatorAction cleanReports = new SimulatorAction(Command.ClearReports,
 				"delete_report.png", "Limpiar el área de informes", KeyEvent.VK_S,
 				"control S", () -> reports.setText(""));
 		cleanReports.register(this);
@@ -254,7 +283,7 @@ public class SimWindow extends JPanel {
 		file.setMnemonic(KeyEvent.VK_S);
 
 		reports.add(getAction(Command.GenerateReports));
-		reports.add(getAction(Command.CleanReports));
+		reports.add(getAction(Command.ClearReports));
 		
 		return menuBar;
 	}
@@ -264,16 +293,24 @@ public class SimWindow extends JPanel {
 
 		toolBar.add(getAction(Command.LoadEvents));
 		toolBar.add(getAction(Command.SaveEvents));
-		toolBar.add(getAction(Command.CleanEvents));
+		toolBar.add(getAction(Command.ClearEvents));
 		toolBar.addSeparator();
 		toolBar.add(getAction(Command.InsertEvents));
 		toolBar.add(getAction(Command.Run));
 		toolBar.add(getAction(Command.Reset));
-		//toolBar.add(setCiclos);
-		//Añadir aqui etiqueta para el tiempo---------------
+		
+		cicles = new JSpinner();
+		((SpinnerNumberModel) cicles.getModel()).setMinimum(0);
+		toolBar.add(cicles);
+		time = new JTextField();
+		//Como lo inicializo
+		time.setText("0");
+		time.setEditable(false);
+		toolBar.add(time);
+		
 		toolBar.addSeparator();
 		toolBar.add(getAction(Command.GenerateReports));
-		toolBar.add(getAction(Command.CleanReports));
+		toolBar.add(getAction(Command.ClearReports));
 		toolBar.add(getAction(Command.SaveReport));
 		toolBar.addSeparator();
 		toolBar.add(getAction(Command.Exit));
@@ -289,12 +326,11 @@ public class SimWindow extends JPanel {
 		}
 	}
 
-	private void loadFile(JTextArea area) {
+	private void loadFile() {
 		int returnVal = fc.showOpenDialog(null);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
 			File file = fc.getSelectedFile();
-			String s = readFile(file);
-			area.setText(s);
+			eventsEditor.setText(readFile(file));
 		}
 	}
 
@@ -316,6 +352,29 @@ public class SimWindow extends JPanel {
 		}
 	}
 	
+	private void loadFromString(String fileName) {
+		File file = new File(fileName);
+		eventsEditor.setText(readFile(file));
+	}
+	
+	private void setTime(int ticks) {
+		((SpinnerNumberModel) cicles.getModel()).setValue(ticks);
+	}
+	
+	private class OutputStreamGUI extends OutputStream{
+		private JTextArea area;
+		
+		public OutputStreamGUI(JTextArea area) {
+			super();
+			this.area = area;
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			area.setText(""+b);
+		}
+	}
+	
 	private void addEvents(){
 		//hay que hacerlos
 	}
@@ -329,10 +388,31 @@ public class SimWindow extends JPanel {
 	}
 	
 	private void generateReports(){
+		List<String> v = new ArrayList<>();
+		List<String> r = new ArrayList<>();
+		List<String> j = new ArrayList<>();
+		
+		//DialogWindow dialog = new DialogWindow(new JFrame("Generate Reports"));
+		//dialog.set
 		
 	}
-
-	public static void main(String... args) {
-		SwingUtilities.invokeLater(() -> new SimWindow());
+	
+	@Override
+	public void update(UpdateEvent ue, String error) {
+		switch(ue.getEvent()){
+		case REGISTERED:
+			break;
+		case RESET:
+			
+			break;
+		case NEW_EVENT:
+			break;
+		case ADVANCED:
+			break;
+		case ERROR:
+			break;
+		default:
+			break;
+		}
 	}
 }

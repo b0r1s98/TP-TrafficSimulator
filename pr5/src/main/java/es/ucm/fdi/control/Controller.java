@@ -26,9 +26,13 @@ public class Controller {
 	private int ticks;
 
 	public Controller(InputStream in, OutputStream out, int ticks) {
+		this();
 		this.in = in;
 		this.out = out;
 		this.ticks = ticks;
+	}
+	
+	public Controller() {
 		this.simulation = new TrafficSimulator();
 	}
 
@@ -64,5 +68,17 @@ public class Controller {
 				throw new IllegalArgumentException(
 						"Not sure about what is this: " + i.getTag());
 		}
+	}
+
+	public TrafficSimulator getSimulator() {
+		return simulation;
+	}
+	
+	public void setOutputStream(OutputStream out) {
+		this.out = out;
+	}
+	
+	public void setInputStream(InputStream in) {
+		this.in = in;
 	}
 }

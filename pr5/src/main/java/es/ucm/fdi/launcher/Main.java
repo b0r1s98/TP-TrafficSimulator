@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 
+import javax.swing.SwingUtilities;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -18,6 +20,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import es.ucm.fdi.control.Controller;
+import es.ucm.fdi.view.SimWindow;
 import es.ucm.fdi.ini.Ini;
 
 public class Main {
@@ -26,6 +29,7 @@ public class Main {
 	private static Integer _timeLimit = null;
 	private static String _inFile = null;
 	private static String _outFile = null;
+	private static String _mode = null;
 
 	private static void parseArgs(String[] args) {
 
@@ -39,6 +43,7 @@ public class Main {
 		try {
 			CommandLine line = parser.parse(cmdLineOptions, args);
 			parseHelpOption(line, cmdLineOptions);
+			parseLaunchMode(line);
 			parseInFileOption(line);
 			parseOutFileOption(line);
 			parseStepsOption(line);
@@ -67,10 +72,12 @@ public class Main {
 
 		cmdLineOptions.addOption(Option.builder("h").longOpt("help").desc("Print this message").build());
 		cmdLineOptions.addOption(Option.builder("i").longOpt("input").hasArg().desc("Events input file").build());
+		cmdLineOptions.addOption(Option.builder("m").longOpt("mode").hasArg()
+				.desc("’batch’ for batch mode and ’gui’ for GUI mode (default value is ’batch’)").build());
 		cmdLineOptions.addOption(
-				Option.builder("o").longOpt("output").hasArg().desc("Output file, where reports are written.").build());
+				Option.builder("o").longOpt("output").hasArg().desc("Output file, where reports are written").build());
 		cmdLineOptions.addOption(Option.builder("t").longOpt("ticks").hasArg()
-				.desc("Ticks to execute the simulator's main loop (default value is " + _timeLimitDefaultValue + ").")
+				.desc("Ticks to execute the simulator's main loop (default value is " + _timeLimitDefaultValue + ")")
 				.build());
 
 		return cmdLineOptions;
@@ -86,7 +93,7 @@ public class Main {
 
 	private static void parseInFileOption(CommandLine line) throws ParseException {
 		_inFile = line.getOptionValue("i");
-		if (_inFile == null) {
+		if (_inFile == null && !"gui".equals(_mode)) {
 			throw new ParseException("An events file is missing");
 		}
 	}
@@ -103,6 +110,13 @@ public class Main {
 		} catch (Exception e) {
 			throw new ParseException("Invalid value for time limit: " + t);
 		}
+	}
+	
+	private static void parseLaunchMode(CommandLine line) throws ParseException {
+		_mode = line.getOptionValue("m", "batch");
+		
+		if(!"batch".equals(_mode) && !"gui".equals(_mode))
+			throw new ParseException("Invalid value for mode");
 	}
 
 	/**
@@ -160,10 +174,16 @@ public class Main {
 		Controller control = new Controller(new FileInputStream(_inFile), out, _timeLimit);
 		control.run();
 	}
+	
+	private static void startGUIMode() throws IOException {
+		Controller control = new Controller();
+		SwingUtilities.invokeLater(() -> new SimWindow(control, _inFile, _timeLimit));
+	}
 
 	private static void start(String[] args) throws IOException {
 		parseArgs(args);
-		startBatchMode();
+		if("gui".equals(_mode)) startGUIMode();
+		else startBatchMode();
 	}
 
 	public static void main(String[] args) throws IOException, InvocationTargetException, InterruptedException {
