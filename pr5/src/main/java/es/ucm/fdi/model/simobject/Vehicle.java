@@ -3,7 +3,9 @@ package es.ucm.fdi.model.simobject;
 import java.util.List;
 import java.util.Map;
 
-public class Vehicle extends SimObject {
+import es.ucm.fdi.model.Describable;
+
+public class Vehicle extends SimObject implements Describable {
 	protected int velMaxima;
 	protected int velActual;
 	protected Road actual;
@@ -112,4 +114,21 @@ public class Vehicle extends SimObject {
 	protected String getReportHeader() {
 		return "vehicle_report";
 	}
+
+	@Override
+	public Map<String, String> describe(Map<String, String> out) {
+		out.put("ID", id);
+		out.put("Road", actual.getId());
+		out.put("Location", ""+localizacion);
+		out.put("Speed", ""+velActual);
+		out.put("Km", ""+kilometrage);
+		out.put("Faulty Units", ""+tiempoAveria);
+		StringBuilder sb = new StringBuilder();
+		itinerario.forEach(j -> sb.append(j.getId() + ","));
+		if(sb.length() != 0) sb.delete(sb.length() - 1, sb.length());
+		out.put("Itinerary", "[" + sb.toString() + "]");
+		return out;
+	}
+	
+	
 }

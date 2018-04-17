@@ -18,7 +18,7 @@ public class TrafficSimulator {
 	private int timeCounter;
 
 	public TrafficSimulator() {
-		reset();
+		clear();
 	}
 
 	public void addEvent(Event e) {
@@ -67,12 +67,16 @@ public class TrafficSimulator {
 	}
 
 	// Nuevo -------------------------------------------------------------
-	
+	//Falta por avisar si error
 	public void reset(){
+		clear();
+		fireUpdateEvent(EventType.RESET, "");
+	}
+	
+	private void clear(){
 		this.objects = new RoadMap();
 		this.events = new MultiTreeMap<>();
 		this.timeCounter = 0;
-		fireUpdateEvent(EventType.RESET, "");
 	}
 
 	private List<Listener> listeners = new ArrayList<>();
@@ -118,7 +122,7 @@ public class TrafficSimulator {
 		}
 
 		public List<Event> getEvenQueue() {
-			return events.get(timeCounter);
+			return events.valuesList();
 		}
 
 		public int getCurrentTime() {

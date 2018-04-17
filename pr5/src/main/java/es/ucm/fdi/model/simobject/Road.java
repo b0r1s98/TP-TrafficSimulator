@@ -1,9 +1,11 @@
 package es.ucm.fdi.model.simobject;
 
 import java.util.Map;
+
+import es.ucm.fdi.model.Describable;
 import es.ucm.fdi.util.MultiTreeMap;
 
-public class Road extends SimObject {
+public class Road extends SimObject implements Describable{
 	protected int longitud;
 	protected int maxVel;
 	protected Junction start;
@@ -75,5 +77,19 @@ public class Road extends SimObject {
 
 	protected String getReportHeader() {
 		return "road_report";
+	}
+
+	@Override
+	public Map<String, String> describe(Map<String, String> out) {
+		out.put("ID", id);
+		out.put("Source", start.getId());
+		out.put("Target", end.getId());
+		out.put("Length", ""+longitud);
+		out.put("Max speed", ""+maxVel);
+		StringBuilder sb = new StringBuilder();
+		vehicles.valuesList().forEach(v -> sb.append(v.getId() + ","));
+		if(sb.length() != 0) sb.delete(sb.length() - 1, sb.length());
+		out.put("Vehicles", "[" + sb.toString() + "]");
+		return out;
 	}
 }

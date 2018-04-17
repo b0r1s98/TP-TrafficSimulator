@@ -6,9 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import es.ucm.fdi.model.Describable;
 import es.ucm.fdi.model.exceptions.SimulatorException;
 
-public class Junction extends SimObject {
+public class Junction extends SimObject implements Describable {
 	protected Map<Road, IncomingRoad> saberInc;
 	protected List<IncomingRoad> entrantes;
 	protected int semaforo;
@@ -116,5 +117,21 @@ public class Junction extends SimObject {
 			else
 				return("red");
 		}
+	}
+
+	@Override
+	public Map<String, String> describe(Map<String, String> out) {
+		out.put("ID", id);
+		StringBuilder reportJunct = new StringBuilder();
+		String green = "";
+		for(IncomingRoad ir : entrantes) {
+			if(ir.semaforoVerde) green = "[" + ir.GeneraReport() + "]";
+			else reportJunct.append(ir.GeneraReport() + ",");
+		}
+		if (reportJunct.length() != 0)
+			reportJunct.delete(reportJunct.length() - 1, reportJunct.length());
+		out.put("Green", green);
+		out.put("Red", "[" + reportJunct.toString() + "]");
+		return out;
 	}
 }

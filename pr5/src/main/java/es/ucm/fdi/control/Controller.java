@@ -32,7 +32,7 @@ public class Controller {
 		this.simulation = new TrafficSimulator();
 	}
 
-	public void run() throws IOException {
+	public void run() {
 		try {
 			loadEvents();
 			simulation.run(ticks, out);
