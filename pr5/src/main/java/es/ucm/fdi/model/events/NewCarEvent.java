@@ -26,7 +26,11 @@ public class NewCarEvent extends NewVehicleEvent {
 		this.maxFaultDuration = maxFaultDuration;
 		this.seed = seed;
 	}
-
+	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "New Car " + id);
+	}
 
 	@Override
 	public void execute(RoadMap things) {

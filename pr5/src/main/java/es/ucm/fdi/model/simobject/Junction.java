@@ -120,7 +120,7 @@ public class Junction extends SimObject implements Describable {
 	}
 
 	@Override
-	public Map<String, String> describe(Map<String, String> out) {
+	public void describe(Map<String, String> out) {
 		out.put("ID", id);
 		StringBuilder reportJunct = new StringBuilder();
 		String green = "";
@@ -132,6 +132,5 @@ public class Junction extends SimObject implements Describable {
 			reportJunct.delete(reportJunct.length() - 1, reportJunct.length());
 		out.put("Green", green);
 		out.put("Red", "[" + reportJunct.toString() + "]");
-		return out;
 	}
 }

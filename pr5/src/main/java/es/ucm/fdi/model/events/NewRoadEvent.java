@@ -24,6 +24,11 @@ public class NewRoadEvent extends Event {
 		this.src = src;
 		this.dest = dest;
 	}
+	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "New Road " + id);
+	}
 
 	@Override
 	public void execute(RoadMap things) {

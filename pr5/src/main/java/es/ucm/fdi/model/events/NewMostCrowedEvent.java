@@ -12,6 +12,11 @@ public class NewMostCrowedEvent extends NewJunctionEvent {
 		super(time, id);
 	}
 	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "New MC Junction " + id);
+	}
+	
 	@Override
 	public void execute(RoadMap things) {
 		if (things.getObject(id) != null)

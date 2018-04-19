@@ -16,7 +16,11 @@ public class NewBikeEvent extends NewVehicleEvent {
 			String[] junctions) {
 		super(time, id, maxSpeed, junctions);
 	}
-
+	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "New Bike " + id);
+	}
 
 	@Override
 	public void execute(RoadMap things) {

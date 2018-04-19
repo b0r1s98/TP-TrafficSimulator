@@ -80,16 +80,15 @@ public class Road extends SimObject implements Describable{
 	}
 
 	@Override
-	public Map<String, String> describe(Map<String, String> out) {
+	public void describe(Map<String, String> out) {
 		out.put("ID", id);
 		out.put("Source", start.getId());
 		out.put("Target", end.getId());
 		out.put("Length", ""+longitud);
-		out.put("Max speed", ""+maxVel);
+		out.put("Max Speed", ""+maxVel);
 		StringBuilder sb = new StringBuilder();
 		vehicles.valuesList().forEach(v -> sb.append(v.getId() + ","));
 		if(sb.length() != 0) sb.delete(sb.length() - 1, sb.length());
 		out.put("Vehicles", "[" + sb.toString() + "]");
-		return out;
 	}
 }

@@ -14,6 +14,11 @@ public class NewJunctionEvent extends Event {
 		super(time);
 		this.id = id;
 	}
+	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "New Junction " + id);
+	}
 
 	@Override
 	public void execute(RoadMap things) {

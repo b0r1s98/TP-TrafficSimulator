@@ -18,6 +18,7 @@ public class TrafficSimulator {
 	private int timeCounter;
 
 	public TrafficSimulator() {
+		this.events = new MultiTreeMap<>();
 		clear();
 	}
 
@@ -39,7 +40,6 @@ public class TrafficSimulator {
 			for (Road r : roads)
 				r.avanza();
 			List<Junction> junctions = objects.getJunctions();
-
 			for (Junction j : junctions)
 				j.avanza();
 			timeCounter++;
@@ -75,7 +75,6 @@ public class TrafficSimulator {
 	
 	private void clear(){
 		this.objects = new RoadMap();
-		this.events = new MultiTreeMap<>();
 		this.timeCounter = 0;
 	}
 
@@ -84,7 +83,8 @@ public class TrafficSimulator {
 	public void addSimulatorListener(Listener l) {
 		listeners.add(l);
 		UpdateEvent ue = new UpdateEvent(EventType.REGISTERED);
-		SwingUtilities.invokeLater(()->l.update(ue, ""));
+		//SwingUtilities.invokeLater(()->l.update(ue, ""));
+		l.update(ue, "");
 	}
 
 	public void removeListener(Listener l) {

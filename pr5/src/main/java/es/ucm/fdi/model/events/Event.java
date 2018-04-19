@@ -3,8 +3,9 @@ package es.ucm.fdi.model.events;
 import java.util.Map;
 
 import es.ucm.fdi.control.RoadMap;
+import es.ucm.fdi.model.Describable;
 
-public abstract class Event {
+public abstract class Event implements Describable{
 	private int time;
 
 	public Event(int time) {
@@ -13,6 +14,10 @@ public abstract class Event {
 
 	public int getTime() {
 		return time;
+	}
+	
+	public void describe(Map<String, String> out) {
+		out.put("Time", ""+time);
 	}
 
 	public abstract void execute(RoadMap things);

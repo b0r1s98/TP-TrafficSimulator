@@ -14,6 +14,11 @@ public class NewDirtEvent extends NewRoadEvent {
 			String src, String dest) {
 		super(time, id, maxSpeed, length, src, dest);
 	}
+	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "New Dirt Road " + id);
+	}
 
 	@Override
 	public void execute(RoadMap things) {

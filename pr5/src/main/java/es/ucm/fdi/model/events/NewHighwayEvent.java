@@ -17,6 +17,11 @@ public class NewHighwayEvent extends NewRoadEvent {
 		super(time, id, maxSpeed, length, src, dest);
 		this.lanes = lanes;
 	}
+	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "New Lanes Road " + id);
+	}
 
 	@Override
 	public void execute(RoadMap things) {

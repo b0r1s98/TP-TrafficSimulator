@@ -16,6 +16,11 @@ public class MakeVehicleFaultyEvent extends Event {
 		this.tiempoAveria = tiempoAveria;
 		this.vehicles = vehicles;
 	}
+	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "Break Vehicles [" + vehicles + "]");
+	}
 
 	@Override
 	public void execute(RoadMap things) {

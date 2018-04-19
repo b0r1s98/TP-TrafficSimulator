@@ -38,7 +38,7 @@ public class Controller {
 
 	public void run() {
 		try {
-			loadEvents();
+			loadEvents(in);
 			simulation.run(ticks, out);
 		} catch (IOException e) {
 			System.out.println("Problems loading/saving");
@@ -48,9 +48,9 @@ public class Controller {
 			System.out.println(e.getMessage());
 		}
 	}
-
-	public void loadEvents() throws IOException {
-		Ini init = new Ini(in);
+	
+	public void loadEvents(InputStream input) throws IOException {
+		Ini init = new Ini(input);
 		List<IniSection> list = init.getSections();
 
 		for (IniSection i : list) {
@@ -72,13 +72,5 @@ public class Controller {
 
 	public TrafficSimulator getSimulator() {
 		return simulation;
-	}
-	
-	public void setOutputStream(OutputStream out) {
-		this.out = out;
-	}
-	
-	public void setInputStream(InputStream in) {
-		this.in = in;
 	}
 }

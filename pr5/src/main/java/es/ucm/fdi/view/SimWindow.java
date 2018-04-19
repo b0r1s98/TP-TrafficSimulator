@@ -1,21 +1,28 @@
 package es.ucm.fdi.view;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -25,15 +32,19 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.table.AbstractTableModel;
 
 import es.ucm.fdi.control.Controller;
+import es.ucm.fdi.control.RoadMap;
 import es.ucm.fdi.control.SimulatorAction;
 import es.ucm.fdi.control.TrafficSimulator;
 import es.ucm.fdi.control.TrafficSimulator.Listener;
 import es.ucm.fdi.control.TrafficSimulator.UpdateEvent;
 import es.ucm.fdi.model.Describable;
+import es.ucm.fdi.model.events.Event;
 
 @SuppressWarnings("serial")
 public class SimWindow extends JPanel implements Listener{
@@ -41,32 +52,30 @@ public class SimWindow extends JPanel implements Listener{
 	private JFileChooser fc;
 	private JTextField time;
 	private JSpinner cicles;
+	private OutputStream outText;
 	
 	private JTextArea eventsEditor;
 	private JTable eventsQueue;
 	private JTextArea reports;
-	private JTable vehicles;
-	private JTable roads;
-	private JTable junctions;
+	private JTable vehiclesTable;
+	private JTable roadsTable;
+	private JTable junctionsTable;
 	private GraphComponent graphComp;
 	//Grafo
-	//Barra de estado
+	private JLabel statusBar;
 	
 	private Controller controller;
-	private OutputStream out;
 	
 
 	public SimWindow(Controller controller, String file, Integer ticks) {
 		super();
 		this.controller = controller;
+		controller.getSimulator().addSimulatorListener(this);
 		
 		initGUI();
 		
-		controller.getSimulator().addSimulatorListener(this);
 		if(file != null) loadFromString(file);
-		setTime(ticks);
-		out = new OutputStreamGUI(reports);
-		controller.setOutputStream(out);
+		if(ticks != null) setTime(ticks);
 	}
 
 	private void initGUI() {
@@ -78,20 +87,24 @@ public class SimWindow extends JPanel implements Listener{
 		createActions();
 		jframe.setJMenuBar(createMenuBar());
 		add(createJToolBar(), BorderLayout.PAGE_START);
-
+		
 		graphComp = new GraphComponent();
+		
 		JSplitPane bottomSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
 				createDownLeft(), graphComp);
+		bottomSplit.setResizeWeight(.5);
 
 		JSplitPane topSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
 				createUp(), bottomSplit);
 		
 		this.add(topSplit, BorderLayout.CENTER);
 		
-		//Arreglar esto -----------------------
-		JLabel status = new JLabel();
-		status.setText("");
-		jframe.add(status, BorderLayout.PAGE_END);
+		outText = new OutputStreamGUI(reports);
+		
+		//revisar altura y grosor letra
+		statusBar = new JLabel("Ready!");
+		statusBar.setBorder(BorderFactory.createLoweredBevelBorder());
+		jframe.add(statusBar, BorderLayout.PAGE_END);
 
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jframe.setSize(1000, 1000);
@@ -99,16 +112,40 @@ public class SimWindow extends JPanel implements Listener{
 		topSplit.setDividerLocation(.5);
 		bottomSplit.setDividerLocation(.5);
 	}
-
+	
+	private void initTables(List<Event> events, RoadMap roadmap) {
+		String[] eFields = { "#", "Time", "Type"};
+		ListOfMapsTableModel eModel = new ListOfMapsTableModel(eFields, events);
+		eventsQueue = new JTable(eModel);
+		
+		String[] vFields = {"ID", "Road", "Location", "Speed", "Km",
+				"Faulty Units", "Itinerary" };
+		ListOfMapsTableModel vModel = new ListOfMapsTableModel(vFields, roadmap.getVehicles());
+		vehiclesTable = new JTable(vModel);
+		
+		String[] rFields = { "ID", "Source", "Target", "Length", "Max Speed",
+				"Vehicles" };
+		ListOfMapsTableModel rModel = new ListOfMapsTableModel(rFields, roadmap.getRoads());
+		roadsTable = new JTable(rModel);
+		
+		String[] jFields = { "ID", "Green", "Red"};
+		ListOfMapsTableModel jModel = new ListOfMapsTableModel(jFields, roadmap.getJunctions());
+		junctionsTable = new JTable(jModel);
+	}
+	
 	private class ListOfMapsTableModel extends AbstractTableModel {
 		private String[] fieldNames;
 		private List<? extends Describable> elements;
 		
+		private HashMap<String, String> map;
+		private int previousRow;
 		
 		public ListOfMapsTableModel(String[] fieldNames,
 				List<? extends Describable> elements) {
 			this.fieldNames = fieldNames;
 			this.elements = elements;
+			this.map = new HashMap<String, String>();
+			this.previousRow = -1;
 		}
 
 		@Override
@@ -127,56 +164,65 @@ public class SimWindow extends JPanel implements Listener{
 		}
 
 		@Override
-		// MEJORAAAAAAAAR--------------------------------------------
 		public Object getValueAt(int rowIndex, int columnIndex) {
-			return elements.get(rowIndex)
-					.describe(new HashMap<String, String>())
-					.get(fieldNames[columnIndex]);
+			if(rowIndex != previousRow) {
+				elements.get(rowIndex).describe(map);
+				map.put("#", ""+rowIndex);
+				previousRow = rowIndex;
+			}
+			return map.get(fieldNames[columnIndex]);
 		}
 	}
 
 	private JPanel createDownLeft() {
-		JPanel panel = new JPanel();
+		JPanel panel = new JPanel(new GridLayout(3,1));
+		Border b = BorderFactory.createLineBorder(Color.black, 2);
 		
-		String[] vFields = {"ID", "Road", "Location", "Speed", "Km",
-				"Faulty Units", "Itinerary" };
-		//Que les paso de objeto con elementos? (a las 4)---------------------
-		ListOfMapsTableModel vModel = new ListOfMapsTableModel(vFields, new ArrayList<Describable>());
-		vehicles = new JTable(vModel);
+		JPanel vPanel = new JPanel(new BorderLayout());
+		vPanel.setBorder(BorderFactory.createTitledBorder(b, "Vehicles"));
+		vPanel.add(new JScrollPane(vehiclesTable));
+		panel.add(vPanel);
 		
-		String[] rFields = { "ID", "Source", "Target", "Length", "Max Speed",
-				"Vehicles" };
-		ListOfMapsTableModel rModel = new ListOfMapsTableModel(rFields, new ArrayList<Describable>());
-		roads = new JTable(rModel);
+		JPanel rPanel = new JPanel(new BorderLayout());
+		rPanel.setBorder(BorderFactory.createTitledBorder(b, "Roads"));
+		rPanel.add(new JScrollPane(roadsTable));
+		panel.add(rPanel);
 		
-		String[] jFields = { "ID", "Green", "Red"};
-		ListOfMapsTableModel jModel = new ListOfMapsTableModel(jFields, new ArrayList<Describable>());
-		junctions = new JTable(jModel);
+		JPanel jPanel = new JPanel(new BorderLayout());
+		jPanel.setBorder(BorderFactory.createTitledBorder(b, "Junctions"));
+		jPanel.add(new JScrollPane(junctionsTable));
+		panel.add(jPanel);
 		
 		return panel;
 	}
 
 	private JPanel createUp() {
-		JPanel panel = new JPanel();
-
+		JPanel panel = new JPanel(new GridLayout(1,3));
+		Border b = BorderFactory.createLineBorder(Color.black, 2);
+		
 		eventsEditor = new JTextArea();
 		eventsEditor.setEnabled(true);
 		eventsEditor.setLineWrap(true);
 		eventsEditor.setWrapStyleWord(true);
-		panel.add(new JScrollPane(eventsEditor), BorderLayout.LINE_START);
+		JPanel panelIzq = new JPanel(new BorderLayout());
+		panelIzq.setBorder(BorderFactory.createTitledBorder(b, "Events: "));
+		panelIzq.add(new JScrollPane(eventsEditor));
+		panel.add(panelIzq);
+		//crear menu contextual
 
-		String[] eFields = { "#", "Time", "Type"};
-		ListOfMapsTableModel eModel = new ListOfMapsTableModel(eFields, new ArrayList<Describable>());
-		eventsQueue = new JTable(eModel);
-		panel.add(eventsQueue, BorderLayout.CENTER);
+		JPanel panelMed = new JPanel(new BorderLayout());
+		panelMed.setBorder(BorderFactory.createTitledBorder(b, "Events Queue"));
+		panelMed.add(new JScrollPane(eventsQueue));
+		panel.add(panelMed);
 
 		reports = new JTextArea();
-		reports.setEnabled(false);
+		reports.setEditable(false);
 		reports.setLineWrap(true);
 		reports.setWrapStyleWord(true);
-		panel.add(new JScrollPane(reports), BorderLayout.LINE_END);
-		
-		//Falta soportar menús contextuales
+		JPanel panelDer = new JPanel(new BorderLayout());
+		panelDer.setBorder(BorderFactory.createTitledBorder(b, "Reports"));
+		panelDer.add(new JScrollPane(reports));
+		panel.add(panelDer);
 		
 		return panel;
 	}
@@ -300,10 +346,10 @@ public class SimWindow extends JPanel implements Listener{
 		toolBar.add(getAction(Command.Reset));
 		
 		cicles = new JSpinner();
-		((SpinnerNumberModel) cicles.getModel()).setMinimum(0);
+		((SpinnerNumberModel) cicles.getModel()).setMinimum(1);
+		setTime(1);
 		toolBar.add(cicles);
 		time = new JTextField();
-		//Como lo inicializo
 		time.setText("0");
 		time.setEditable(false);
 		toolBar.add(time);
@@ -371,19 +417,29 @@ public class SimWindow extends JPanel implements Listener{
 
 		@Override
 		public void write(int b) throws IOException {
-			area.setText(""+b);
+	        area.append(""+(char)b);
+	        area.setCaretPosition(area.getDocument().getLength());
 		}
 	}
 	
 	private void addEvents(){
-		//hay que hacerlos
+		try {
+			controller.loadEvents(new ByteArrayInputStream(eventsEditor.getText().getBytes()));
+		} catch (Exception e) {
+			String s = eventsEditor.getText();
+			int nextEventIndex = s.indexOf("[", s.indexOf("[")+1);
+			if(nextEventIndex == -1) nextEventIndex = s.length();
+			eventsEditor.requestFocus();
+			eventsEditor.setSelectionStart(0);
+			eventsEditor.setSelectionEnd(nextEventIndex);
+			createAlert("El evento seleccionado parece incorrecto");
+			statusBar.setText("Incorrect event");
+		}
 	}
 	
-	private void runSimulator(){
-		
-	}
-	
-	private void resetSimulator(){
+	private void createAlert(String message) {
+		JFrame frame = new JFrame();
+		JOptionPane.showMessageDialog(frame, message, "Warning", JOptionPane.WARNING_MESSAGE);
 		
 	}
 	
@@ -397,19 +453,54 @@ public class SimWindow extends JPanel implements Listener{
 		
 	}
 	
+	private void runSimulator(){
+		int ticks = ((SpinnerNumberModel) cicles.getModel()).getNumber().intValue();
+		//conseguir out correcto del boton en este momento
+		try {
+			controller.getSimulator().run(ticks, outText);
+		} catch (IOException e) {
+			//que meto aqui
+		}
+	}
+	
+	private void resetSimulator(){
+		controller.getSimulator().reset();
+	}
+	
+	private void updateTable(JTable table) {
+		((ListOfMapsTableModel) table.getModel()).fireTableDataChanged();
+	}
+	
 	@Override
 	public void update(UpdateEvent ue, String error) {
 		switch(ue.getEvent()){
 		case REGISTERED:
+			initTables(ue.getEvenQueue(), ue.getRoadMap());
 			break;
 		case RESET:
-			
+			time.setText("0");
+			reports.setText("");
+			updateTable(vehiclesTable);
+			updateTable(roadsTable);
+			updateTable(junctionsTable);
+			//repintar grafo
+			statusBar.setText("Simulator has been reseted");
 			break;
 		case NEW_EVENT:
+			updateTable(eventsQueue);
+			statusBar.setText("Events have been loaded to the simulator");
 			break;
 		case ADVANCED:
+			time.setText(""+ (Integer.parseInt(time.getText()) + 1));
+			updateTable(vehiclesTable);
+			updateTable(roadsTable);
+			updateTable(junctionsTable);
+			//repintar grafo
+			statusBar.setText("Simulator has advanced in time!");
 			break;
 		case ERROR:
+			createAlert(error);
+			statusBar.setText("Fatal error.");
 			break;
 		default:
 			break;

@@ -103,12 +103,15 @@ public class Main {
 	}
 
 	private static void parseStepsOption(CommandLine line) throws ParseException {
-		String t = line.getOptionValue("t", _timeLimitDefaultValue.toString());
-		try {
-			_timeLimit = Integer.parseInt(t);
-			assert (_timeLimit < 0);
-		} catch (Exception e) {
-			throw new ParseException("Invalid value for time limit: " + t);
+		String t = line.getOptionValue("t");
+		if(!"gui".equals(_mode)){
+			if(t == null) t = _timeLimitDefaultValue.toString();
+			try {
+				_timeLimit = Integer.parseInt(t);
+				assert (_timeLimit < 0);
+			} catch (Exception e) {
+				throw new ParseException("Invalid value for time limit: " + t);
+			}
 		}
 	}
 	

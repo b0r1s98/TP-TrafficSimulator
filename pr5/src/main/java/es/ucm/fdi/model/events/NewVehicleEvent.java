@@ -21,6 +21,11 @@ public class NewVehicleEvent extends Event {
 		this.maxSpeed = maxSpeed;
 		this.junctions = junctions;
 	}
+	
+	public void describe(Map<String, String> out) {
+		super.describe(out);
+		out.put("Type", "New Vehicle " + id);
+	}
 
 	@Override
 	public void execute(RoadMap things) {
