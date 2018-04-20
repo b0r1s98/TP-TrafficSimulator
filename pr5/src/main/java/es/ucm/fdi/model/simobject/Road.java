@@ -1,5 +1,6 @@
 package es.ucm.fdi.model.simobject;
 
+import java.util.List;
 import java.util.Map;
 
 import es.ucm.fdi.model.Describable;
@@ -20,6 +21,10 @@ public class Road extends SimObject implements Describable{
 		start = princ;
 		end = fin;
 	}
+	
+	public Junction getInicio() {
+		return start;
+	}
 
 	public Junction getFinal() {
 		return end;
@@ -27,6 +32,10 @@ public class Road extends SimObject implements Describable{
 
 	public int getLongitud() {
 		return longitud;
+	}
+	
+	public List<Vehicle> getVehicles() {
+		return vehicles.valuesList();
 	}
 
 	public void newVehicleR(Vehicle v) {

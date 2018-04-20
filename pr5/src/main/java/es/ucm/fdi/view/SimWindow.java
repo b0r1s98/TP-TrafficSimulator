@@ -7,9 +7,7 @@ import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +15,7 @@ import java.util.List;
 
 import javax.swing.Action;
 import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -32,15 +31,12 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.table.AbstractTableModel;
 
 import es.ucm.fdi.control.Controller;
 import es.ucm.fdi.control.RoadMap;
 import es.ucm.fdi.control.SimulatorAction;
-import es.ucm.fdi.control.TrafficSimulator;
 import es.ucm.fdi.control.TrafficSimulator.Listener;
 import es.ucm.fdi.control.TrafficSimulator.UpdateEvent;
 import es.ucm.fdi.model.Describable;
@@ -52,6 +48,7 @@ public class SimWindow extends JPanel implements Listener{
 	private JFileChooser fc;
 	private JTextField time;
 	private JSpinner cicles;
+	private JCheckBox redirect;
 	private OutputStream outText;
 	
 	private JTextArea eventsEditor;
@@ -60,8 +57,7 @@ public class SimWindow extends JPanel implements Listener{
 	private JTable vehiclesTable;
 	private JTable roadsTable;
 	private JTable junctionsTable;
-	private GraphComponent graphComp;
-	//Grafo
+	private GraphLayout graphRoadMap;
 	private JLabel statusBar;
 	
 	private Controller controller;
@@ -85,13 +81,17 @@ public class SimWindow extends JPanel implements Listener{
 
 		fc = new JFileChooser();
 		createActions();
+		getAction(Command.Run).setEnabled(false);
+		getAction(Command.Reset).setEnabled(false);
 		jframe.setJMenuBar(createMenuBar());
 		add(createJToolBar(), BorderLayout.PAGE_START);
 		
-		graphComp = new GraphComponent();
+		RoadMap roadMap = controller.getSimulator().getRoadMap();
+		graphRoadMap = new GraphLayout(roadMap);
+		initTables(controller.getSimulator().getEvents(), roadMap);
 		
 		JSplitPane bottomSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-				createDownLeft(), graphComp);
+				createDownLeft(), graphRoadMap);
 		bottomSplit.setResizeWeight(.5);
 
 		JSplitPane topSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
@@ -101,7 +101,6 @@ public class SimWindow extends JPanel implements Listener{
 		
 		outText = new OutputStreamGUI(reports);
 		
-		//revisar altura y grosor letra
 		statusBar = new JLabel("Ready!");
 		statusBar.setBorder(BorderFactory.createLoweredBevelBorder());
 		jframe.add(statusBar, BorderLayout.PAGE_END);
@@ -245,55 +244,54 @@ public class SimWindow extends JPanel implements Listener{
 	}
 	
 	private void createActions(){
-		// cambiar atajos teclado (aqui y abajo) -----------------------------
 
 		SimulatorAction loadEvents = new SimulatorAction(Command.LoadEvents, "open.png",
-				"Cargar un fichero de eventos", KeyEvent.VK_L, "control O",
+				"Cargar un fichero de eventos", KeyEvent.VK_L, "ctrl L",
 				() -> loadFile());
 		loadEvents.register(this);
 
 		SimulatorAction saveEvents = new SimulatorAction(Command.SaveEvents, "save.png",
-				"Guardar un fichero de eventos", KeyEvent.VK_S, "control S",
+				"Guardar un fichero de eventos", KeyEvent.VK_A, "ctrl S",
 				() -> saveFile(eventsEditor));
 		saveEvents.register(this);
 
 		SimulatorAction cleanEvents = new SimulatorAction(Command.ClearEvents,
-				"clear.png", "Limpiar la zona de eventos", KeyEvent.VK_S,
-				"control S", () -> eventsEditor.setText(""));
+				"clear.png", "Limpiar la zona de eventos", KeyEvent.VK_N, "ctrl N",
+				() -> eventsEditor.setText(""));
 		cleanEvents.register(this);
 		
 		SimulatorAction insertEvents = new SimulatorAction(Command.InsertEvents,
-				"events.png", "Insertar eventos en el simulador", KeyEvent.VK_S,
-				"control S", () -> addEvents());
+				"events.png", "Insertar eventos en el simulador", KeyEvent.VK_E,
+				"ctrl E", () -> addEvents());
 		insertEvents.register(this);
 		
 		SimulatorAction play = new SimulatorAction(Command.Run,
-				"play.png", "Ejecutar el simulador", KeyEvent.VK_S,
-				"control S", () -> runSimulator());
+				"play.png", "Ejecutar el simulador", KeyEvent.VK_U,
+				"control p", () -> runSimulator());
 		play.register(this);
 		
 		SimulatorAction reset = new SimulatorAction(Command.Reset,
-				"reset.png", "Reiniciar el simulador", KeyEvent.VK_S,
-				"control S", () -> resetSimulator());
+				"reset.png", "Reiniciar el simulador", KeyEvent.VK_T,
+				"control t", () -> resetSimulator());
 		reset.register(this);
 		
 		SimulatorAction generateReports = new SimulatorAction(Command.GenerateReports,
-				"report.png", "Generar informes", KeyEvent.VK_S,
-				"control S", () -> generateReports());
+				"report.png", "Generar informes", KeyEvent.VK_G,
+				"control k", () -> generateReports());
 		generateReports.register(this);
 		
 		SimulatorAction cleanReports = new SimulatorAction(Command.ClearReports,
-				"delete_report.png", "Limpiar el área de informes", KeyEvent.VK_S,
-				"control S", () -> reports.setText(""));
+				"delete_report.png", "Limpiar el área de informes", KeyEvent.VK_C,
+				"control u", () -> reports.setText(""));
 		cleanReports.register(this);
 		
 		SimulatorAction saveReports = new SimulatorAction(Command.SaveReport,
-				"save_report.png", "Guardar los informes", KeyEvent.VK_S,
-				"control S", () -> saveFile(reports));
+				"save_report.png", "Guardar los informes", KeyEvent.VK_V,
+				"control r", () -> saveFile(reports));
 		saveReports.register(this);
 
 		SimulatorAction quit = new SimulatorAction(Command.Exit, "exit.png",
-				"Salir de la aplicación", KeyEvent.VK_A, "control shift X",
+				"Salir de la aplicación", KeyEvent.VK_E, "control shift X",
 				() -> System.exit(0));
 		quit.register(this);
 	}
@@ -318,15 +316,17 @@ public class SimWindow extends JPanel implements Listener{
 
 		JMenu simulator = new JMenu("Simulator");
 		menuBar.add(simulator);
-		file.setMnemonic(KeyEvent.VK_S);
+		simulator.setMnemonic(KeyEvent.VK_S);
 
 		simulator.add(getAction(Command.Run));
 		simulator.add(getAction(Command.Reset));
-		//aqui hay boton especial--------------------------------
+		redirect = new JCheckBox("Redirect Output");
+		redirect.setSelected(true);
+		simulator.add(redirect);
 		
 		JMenu reports = new JMenu("Reports");
 		menuBar.add(reports);
-		file.setMnemonic(KeyEvent.VK_S);
+		reports.setMnemonic(KeyEvent.VK_R);
 
 		reports.add(getAction(Command.GenerateReports));
 		reports.add(getAction(Command.ClearReports));
@@ -348,10 +348,13 @@ public class SimWindow extends JPanel implements Listener{
 		cicles = new JSpinner();
 		((SpinnerNumberModel) cicles.getModel()).setMinimum(1);
 		setTime(1);
+		cicles.setName("Steps:");
+		
 		toolBar.add(cicles);
 		time = new JTextField();
 		time.setText("0");
 		time.setEditable(false);
+		time.setName("Time:");
 		toolBar.add(time);
 		
 		toolBar.addSeparator();
@@ -424,7 +427,10 @@ public class SimWindow extends JPanel implements Listener{
 	
 	private void addEvents(){
 		try {
+			//controller.removeEvents();
 			controller.loadEvents(new ByteArrayInputStream(eventsEditor.getText().getBytes()));
+			getAction(Command.Run).setEnabled(true);
+			getAction(Command.Reset).setEnabled(true);
 		} catch (Exception e) {
 			String s = eventsEditor.getText();
 			int nextEventIndex = s.indexOf("[", s.indexOf("[")+1);
@@ -455,12 +461,11 @@ public class SimWindow extends JPanel implements Listener{
 	
 	private void runSimulator(){
 		int ticks = ((SpinnerNumberModel) cicles.getModel()).getNumber().intValue();
-		//conseguir out correcto del boton en este momento
-		try {
-			controller.getSimulator().run(ticks, outText);
-		} catch (IOException e) {
-			//que meto aqui
-		}
+		OutputStream out;
+		if(redirect.isSelected()) out = outText;
+		else out = null;
+		//else out = outLog;
+		controller.getSimulator().run(ticks, out);
 	}
 	
 	private void resetSimulator(){
@@ -475,7 +480,6 @@ public class SimWindow extends JPanel implements Listener{
 	public void update(UpdateEvent ue, String error) {
 		switch(ue.getEvent()){
 		case REGISTERED:
-			initTables(ue.getEvenQueue(), ue.getRoadMap());
 			break;
 		case RESET:
 			time.setText("0");
@@ -483,8 +487,9 @@ public class SimWindow extends JPanel implements Listener{
 			updateTable(vehiclesTable);
 			updateTable(roadsTable);
 			updateTable(junctionsTable);
-			//repintar grafo
+			graphRoadMap.generateGraph();
 			statusBar.setText("Simulator has been reseted");
+			getAction(Command.Run).setEnabled(true);
 			break;
 		case NEW_EVENT:
 			updateTable(eventsQueue);
@@ -495,12 +500,13 @@ public class SimWindow extends JPanel implements Listener{
 			updateTable(vehiclesTable);
 			updateTable(roadsTable);
 			updateTable(junctionsTable);
-			//repintar grafo
+			graphRoadMap.generateGraph();
 			statusBar.setText("Simulator has advanced in time!");
 			break;
 		case ERROR:
 			createAlert(error);
 			statusBar.setText("Fatal error.");
+			getAction(Command.Run).setEnabled(false);
 			break;
 		default:
 			break;

@@ -7,6 +7,7 @@ import java.util.*;
 import javax.swing.SwingUtilities;
 
 import es.ucm.fdi.model.events.Event;
+import es.ucm.fdi.model.exceptions.SimulatorException;
 import es.ucm.fdi.ini.Ini;
 import es.ucm.fdi.ini.IniSection;
 import es.ucm.fdi.model.simobject.*;
@@ -29,23 +30,34 @@ public class TrafficSimulator {
 		fireUpdateEvent(EventType.NEW_EVENT, "");
 	}
 
-	public void run(int numSteps, OutputStream out) throws IOException {
+	public void run(int numSteps, OutputStream out) {
 		int timeLimit = timeCounter + numSteps - 1;
-		while (timeCounter <= timeLimit) {
-			List<Event> nowEvents = events.get(timeCounter);
-			if (nowEvents != null)
-				for (Event e : nowEvents)
-					e.execute(objects);
-			List<Road> roads = objects.getRoads();
-			for (Road r : roads)
-				r.avanza();
-			List<Junction> junctions = objects.getJunctions();
-			for (Junction j : junctions)
-				j.avanza();
-			timeCounter++;
-			fireUpdateEvent(EventType.ADVANCED, "");
-			generateReport(out);
+		try {
+			while (timeCounter <= timeLimit) {
+				List<Event> nowEvents = events.get(timeCounter);
+				if (nowEvents != null)
+					for (Event e : nowEvents)
+						e.execute(objects);
+				List<Road> roads = objects.getRoads();
+				for (Road r : roads)
+					r.avanza();
+				List<Junction> junctions = objects.getJunctions();
+				for (Junction j : junctions)
+					j.avanza();
+				
+				timeCounter++;
+				fireUpdateEvent(EventType.ADVANCED, "");
+				
+				generateReport(out);
+			}
+		} catch (SimulatorException e) {
+			System.out.println(e.getMessage());
+			fireUpdateEvent(EventType.ERROR, e.getMessage());
+		} catch (IOException e) {
+			System.out.println("Problems loading/saving");
+			fireUpdateEvent(EventType.ERROR, "Problems loading/saving");
 		}
+		
 	}
 
 	private void addSectionsFor(List<? extends SimObject> it, Ini report) {
@@ -83,8 +95,7 @@ public class TrafficSimulator {
 	public void addSimulatorListener(Listener l) {
 		listeners.add(l);
 		UpdateEvent ue = new UpdateEvent(EventType.REGISTERED);
-		//SwingUtilities.invokeLater(()->l.update(ue, ""));
-		l.update(ue, "");
+		SwingUtilities.invokeLater(()->l.update(ue, ""));
 	}
 
 	public void removeListener(Listener l) {
@@ -129,4 +140,14 @@ public class TrafficSimulator {
 			return timeCounter;
 		}
 	}
+
+	public RoadMap getRoadMap() {
+		return objects;
+	}
+
+	public List<Event> getEvents(){
+		return events.valuesList();
+	}
+	
+	
 }

@@ -109,6 +109,7 @@ public class Junction extends SimObject implements Describable {
 			r.append(",[" + vehiculosCola + "])");
 
 			return r.toString();
+			//return "("+id+","+semaforoReport()+",["+String.join(",", cola)
 		}
 		
 		protected String semaforoReport(){

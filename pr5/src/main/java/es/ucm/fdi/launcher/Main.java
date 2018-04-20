@@ -178,7 +178,7 @@ public class Main {
 		control.run();
 	}
 	
-	private static void startGUIMode() throws IOException {
+	private static void startGUIMode() {
 		Controller control = new Controller();
 		SwingUtilities.invokeLater(() -> new SimWindow(control, _inFile, _timeLimit));
 	}
