@@ -17,7 +17,9 @@ public class CarTest {
 		Car c = new Car(10, itinerary, "v1", "car", 0, 1, 3, 32);
 		Road r1 = new Road("r1", 100, 20, itinerary.get(0), itinerary.get(1));
 		c.moveToNextRoad(r1);
-		c.avanza();
+		r1.avanza();
+		assertTrue("No debería haberse estropeado", c.getTiempoAveria() == 0);
+		r1.avanza();
 		assertTrue("Debería haberse estropeado", c.getTiempoAveria() != 0);
 	}
 

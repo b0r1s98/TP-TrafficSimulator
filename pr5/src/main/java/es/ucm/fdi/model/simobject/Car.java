@@ -26,7 +26,7 @@ public class Car extends Vehicle {
 	}
 
 	public void avanza() {
-		if (tiempoAveria == 0 && kmSinceFault >= resistanceKm
+		if (tiempoAveria == 0 && kmSinceFault > resistanceKm
 				&& numRand.nextDouble() < faultProbability) {
 			setTiempoAveria(numRand.nextInt(maxFaultDuration) + 1);
 		}

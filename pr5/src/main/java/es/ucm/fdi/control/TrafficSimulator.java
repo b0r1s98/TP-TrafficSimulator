@@ -29,6 +29,10 @@ public class TrafficSimulator {
 		events.putValue(e.getTime(), e);
 		fireUpdateEvent(EventType.NEW_EVENT, "");
 	}
+	
+	public void removeEvents() {
+		events.clear();
+	}
 
 	public void run(int numSteps, OutputStream out) {
 		int timeLimit = timeCounter + numSteps - 1;

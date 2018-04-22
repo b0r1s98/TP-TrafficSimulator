@@ -73,7 +73,7 @@ public class Junction extends SimObject implements Describable {
 
 	protected void fillReportDetails(Map<String, String> out) {
 		StringBuilder reportJunct = new StringBuilder();
-		entrantes.forEach(r -> reportJunct.append(r.GeneraReport() + ","));
+		entrantes.forEach(r -> reportJunct.append(r.generateReport() + ","));
 
 		if (entrantes.size() != 0)
 			reportJunct.delete(reportJunct.length() - 1, reportJunct.length());
@@ -96,7 +96,7 @@ public class Junction extends SimObject implements Describable {
 			semaforoVerde = false;
 		}
 
-		protected String GeneraReport() {
+		protected String generateReport() {
 			StringBuilder vehiculosCola = new StringBuilder();
 			cola.forEach(v -> vehiculosCola.append(v.getId() + ","));
 			if (cola.size() != 0)
@@ -126,8 +126,8 @@ public class Junction extends SimObject implements Describable {
 		StringBuilder reportJunct = new StringBuilder();
 		String green = "";
 		for(IncomingRoad ir : entrantes) {
-			if(ir.semaforoVerde) green = "[" + ir.GeneraReport() + "]";
-			else reportJunct.append(ir.GeneraReport() + ",");
+			if(ir.semaforoVerde) green = "[" + ir.generateReport() + "]";
+			else reportJunct.append(ir.generateReport() + ",");
 		}
 		if (reportJunct.length() != 0)
 			reportJunct.delete(reportJunct.length() - 1, reportJunct.length());

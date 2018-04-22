@@ -2,14 +2,18 @@ package es.ucm.fdi.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -21,8 +25,10 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
@@ -41,6 +47,7 @@ import es.ucm.fdi.control.TrafficSimulator.Listener;
 import es.ucm.fdi.control.TrafficSimulator.UpdateEvent;
 import es.ucm.fdi.model.Describable;
 import es.ucm.fdi.model.events.Event;
+import es.ucm.fdi.model.simobject.SimObject;
 
 @SuppressWarnings("serial")
 public class SimWindow extends JPanel implements Listener{
@@ -51,6 +58,7 @@ public class SimWindow extends JPanel implements Listener{
 	private JCheckBox redirect;
 	private OutputStream outText;
 	
+	private JPopupMenu botonDer;
 	private JTextArea eventsEditor;
 	private JTable eventsQueue;
 	private JTextArea reports;
@@ -207,7 +215,36 @@ public class SimWindow extends JPanel implements Listener{
 		panelIzq.setBorder(BorderFactory.createTitledBorder(b, "Events: "));
 		panelIzq.add(new JScrollPane(eventsEditor));
 		panel.add(panelIzq);
-		//crear menu contextual
+		initiatePopUpMenu();
+		eventsEditor.addMouseListener(new MouseListener() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				showPopup(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				showPopup(e);
+			}
+
+			private void showPopup(MouseEvent e) {
+				if (e.isPopupTrigger() && eventsEditor.isEnabled()) {
+					botonDer.show(e.getComponent(), e.getX(), e.getY());
+				}
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+			}
+		});
 
 		JPanel panelMed = new JPanel(new BorderLayout());
 		panelMed.setBorder(BorderFactory.createTitledBorder(b, "Events Queue"));
@@ -345,16 +382,22 @@ public class SimWindow extends JPanel implements Listener{
 		toolBar.add(getAction(Command.Run));
 		toolBar.add(getAction(Command.Reset));
 		
+		toolBar.add(new JLabel(" Steps: "));
 		cicles = new JSpinner();
 		((SpinnerNumberModel) cicles.getModel()).setMinimum(1);
 		setTime(1);
-		cicles.setName("Steps:");
-		
+		cicles.setToolTipText("Número de ciclos que avanzará el simulador");
+		Dimension d = cicles.getPreferredSize();
+		d.width = 100;
+		cicles.setPreferredSize(d);
 		toolBar.add(cicles);
+		
+		toolBar.add(new JLabel(" Time: "));
 		time = new JTextField();
 		time.setText("0");
 		time.setEditable(false);
 		time.setName("Time:");
+		time.setToolTipText("Instante de la simuación");
 		toolBar.add(time);
 		
 		toolBar.addSeparator();
@@ -386,9 +429,9 @@ public class SimWindow extends JPanel implements Listener{
 	private static String readFile(File file) {
 		String s = "";
 		try {
-			s = new String(Files.readAllBytes(file.toPath()));
+			s = new String(Files.readAllBytes(file.toPath()), "UTF-8");
 		} catch (IOException e) {
-			e.printStackTrace();
+			createAlert("File couldn't be loaded.");
 		}
 		return s;
 	}
@@ -397,7 +440,7 @@ public class SimWindow extends JPanel implements Listener{
 		try {
 			Files.write(file.toPath(), content.getBytes("UTF-8"));
 		} catch (IOException e) {
-			e.printStackTrace();
+			createAlert("File couldn't be saved.");
 		}
 	}
 	
@@ -427,7 +470,8 @@ public class SimWindow extends JPanel implements Listener{
 	
 	private void addEvents(){
 		try {
-			//controller.removeEvents();
+			controller.getSimulator().removeEvents();
+			//resetSimulator();
 			controller.loadEvents(new ByteArrayInputStream(eventsEditor.getText().getBytes()));
 			getAction(Command.Run).setEnabled(true);
 			getAction(Command.Reset).setEnabled(true);
@@ -443,28 +487,126 @@ public class SimWindow extends JPanel implements Listener{
 		}
 	}
 	
-	private void createAlert(String message) {
+	private static void createAlert(String message) {
 		JFrame frame = new JFrame();
 		JOptionPane.showMessageDialog(frame, message, "Warning", JOptionPane.WARNING_MESSAGE);
+	}
+	
+	private void initiatePopUpMenu() {
+		botonDer = new JPopupMenu();
+		JMenu addTemplate = new JMenu("Add Template");
 		
+		String[] templates = { "New RR Junction", "New MC Junction", "New Junction",
+				"New Dirt Road", "New Lanes Road", "New Road", "New Bike", "New Car", 
+				"New Vehicle", "Make Vehicle Faulty"};
+		for (String s : templates) {
+			JMenuItem menuItem = new JMenuItem(s);
+			menuItem.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					eventsEditor.insert(showTemplate(s), eventsEditor.getCaretPosition());
+				}
+			});
+			addTemplate.add(menuItem);
+		}
+		
+		botonDer.add(addTemplate);
+		botonDer.addSeparator();
+		botonDer.add(getAction(Command.LoadEvents));
+		botonDer.add(getAction(Command.SaveEvents));
+		botonDer.add(getAction(Command.ClearEvents));
+	}
+	
+	private String showTemplate(String s) { //ver cursor
+		StringBuilder t = new StringBuilder();
+		switch(s) {
+		case "New RR Junction":
+			t.append(showTemplate("New Junction"));
+			t.append("max_time_slice = \n");
+			t.append("min_time_slice = \n");
+			t.append("type = rr\n");
+			break;
+		case "New MC Junction":
+			t.append(showTemplate("New Junction"));
+			t.append("type = mc\n");
+			break;
+		case "New Junction":
+			t.append("[new_junction]\n");
+			t.append("time = \n");
+			t.append("id = \n");
+			break;
+		case "New Dirt Road":
+			t.append(showTemplate("New Road"));
+			t.append("type = dirt\n");
+			break;
+		case "New Lanes Road":
+			t.append(showTemplate("New Road"));
+			t.append("lanes = \n");
+			t.append("type = lanes\n");
+			break;
+		case "New Road":
+			t.append("[new_road]\n");
+			t.append("time = \n");
+			t.append("id = \n");
+			t.append("src = \n");
+			t.append("dest = \n");
+			t.append("max_speed = \n");
+			t.append("length = \n");
+			break;
+		case "New Bike":
+			t.append(showTemplate("New Vehicle"));
+			t.append("type = bike\n");
+			break;
+		case "New Car":
+			t.append(showTemplate("New Vehicle"));
+			t.append("resistance = \n");
+			t.append("fault_probability = \n");
+			t.append("max_fault_duration = \n");
+			t.append("seed = \n");
+			t.append("type = car\n");
+			break;
+		case "New Vehicle":
+			t.append("[new_vehicle]\n");
+			t.append("time = \n");
+			t.append("id = \n");
+			t.append("itinerary = \n");
+			t.append("max_speed = \n");
+			break;
+		case "Make Vehicle Faulty":
+			t.append("[make_vehicle_faulty]\n");
+			t.append("time = \n");
+			t.append("vehicles = \n");
+			t.append("duration = \n");
+			break;
+		}
+		return t.toString();
 	}
 	
 	private void generateReports(){
-		List<String> v = new ArrayList<>();
-		List<String> r = new ArrayList<>();
-		List<String> j = new ArrayList<>();
-		
-		//DialogWindow dialog = new DialogWindow(new JFrame("Generate Reports"));
-		//dialog.set
-		
+		generateReportsTable(controller.getSimulator().getRoadMap(),vehiclesTable);
+	}
+	
+	private void generateReportsTable(RoadMap r, JTable t) {
+		int[] indices = t.getSelectedRows();
+		String[] idsThings = new String[indices.length];
+		for(int i=0; i<idsThings.length; i++) {
+			idsThings[i] = (String) t.getValueAt(indices[i],0);
+		}
+		SimObject[] simobjects = new SimObject[idsThings.length];
+		for(int i=0; i<idsThings.length; i++) {
+			simobjects[i] = r.getObject(idsThings[i]);
+		}
+		for(SimObject o : simobjects){
+			o.report(Integer.parseInt(time.getText()));
+		}
 	}
 	
 	private void runSimulator(){
 		int ticks = ((SpinnerNumberModel) cicles.getModel()).getNumber().intValue();
 		OutputStream out;
 		if(redirect.isSelected()) out = outText;
-		else out = null;
-		//else out = outLog;
+		else out = new OutputStreamGUI(new JTextArea());
 		controller.getSimulator().run(ticks, out);
 	}
 	
