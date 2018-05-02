@@ -8,43 +8,47 @@ public class Highway extends Road {
 	
 	protected String type;
 	protected int numLanes;
-
-	public Highway(String ide, int lon, int maxv, Junction princ, Junction fin, String type, int numLanes) {
-		super(ide, lon, maxv, princ, fin);
+	
+	public Highway(String id, int length, int maxVel, Junction start,
+			Junction end, String type, int numLanes) {
+		super(id, length, maxVel, start, end);
 		this.type = type;
 		this.numLanes = numLanes;
 	}
-	
-	public int calcularVelBase() {
+
+	public int calculateSpeedBase() {
 		long n = vehicles.sizeOfValues();
-		if (n < 1)
-			n = 1;
-		int value = (maxVel*numLanes / (int) n) + 1;
-		if (maxVel < value)
-			return maxVel;
+		n = (n<1) ? 1 : n;
+		int value = (maxSpeed*numLanes / (int) n) + 1;
+		if (maxSpeed < value) {
+			return maxSpeed;
+		}
 		return value;
 	}
 	
-	public void avanza() {
-		MultiTreeMap<Integer, Vehicle> nuevos = new MultiTreeMap<>((a, b) -> b-a);
-		int velocidadBase = calcularVelBase();
-		int factorReduccion = 1;
+	public void advance() {
+		MultiTreeMap<Integer, Vehicle> newVehicles = new MultiTreeMap<>((a, b) -> b-a);
+		int baseSpeed = calculateSpeedBase();
+		int reductionFactor = 1;
 		int numFaulties = 0;
 		for (Vehicle v : vehicles.innerValues()) {
-			if(factorReduccion == 1)
-				if(v.getTiempoAveria() != 0){
+			if(reductionFactor == 1) {
+				if(v.getFaultyTime() != 0) {
 					numFaulties++;
-					if(numFaulties >= numLanes) 
-						factorReduccion=2;
+					if(numFaulties >= numLanes) {
+						reductionFactor = 2;
+					}
 				}
-			if(v.getLocation() < longitud){
-				if (v.getTiempoAveria() == 0)
-					v.setVelocidadActual(velocidadBase / factorReduccion);
-				v.avanza();
 			}
-			nuevos.putValue(v.getLocation(), v);
+			if(v.getLocation() < length){
+				if (v.getFaultyTime() == 0) {
+					v.setCurrentSpeed(baseSpeed / reductionFactor);
+				}
+				v.advance();
+			}
+			newVehicles.putValue(v.getLocation(), v);
 		}
-		vehicles = nuevos;
+		vehicles = newVehicles;
 	}
 	
 	public void fillReportDetails(Map<String, String> out) {

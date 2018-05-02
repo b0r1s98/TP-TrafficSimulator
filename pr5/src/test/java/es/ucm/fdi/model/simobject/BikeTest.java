@@ -16,13 +16,13 @@ public class BikeTest {
 		itinerary.add(new Junction("j3"));
 		Bike v = new Bike(10, itinerary, "v1", "bike");
 		Bike v1 = new Bike(30, itinerary, "v2", "bike");
-		v.setVelocidadActual(10);
-		v1.setVelocidadActual(2);
-		v.setTiempoAveria(1);
-		v1.setTiempoAveria(1);
+		v.setCurrentSpeed(10);
+		v1.setCurrentSpeed(2);
+		v.setFaultyTime(1);
+		v1.setFaultyTime(1);
 
-		assertTrue("No pone bien el tiempo de averia",v1.getTiempoAveria()==0);
-		assertTrue("No pone bien el tiempo de averia", v.getTiempoAveria()!=0);
+		assertTrue("No pone bien el tiempo de averia",v1.getFaultyTime()==0);
+		assertTrue("No pone bien el tiempo de averia", v.getFaultyTime()!=0);
 	}
 
 }

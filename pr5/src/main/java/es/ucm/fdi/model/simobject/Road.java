@@ -7,66 +7,69 @@ import es.ucm.fdi.model.Describable;
 import es.ucm.fdi.util.MultiTreeMap;
 
 public class Road extends SimObject implements Describable{
-	protected int longitud;
-	protected int maxVel;
+	protected int length;
+	protected int maxSpeed;
 	protected Junction start;
 	protected Junction end;
 	protected MultiTreeMap<Integer, Vehicle> vehicles;
-
-	public Road(String ide, int lon, int maxv, Junction princ, Junction fin) {
-		super(ide);
-		longitud = lon;
-		maxVel = maxv;
-		vehicles = new MultiTreeMap<>((a, b) -> b - a);
-		start = princ;
-		end = fin;
-	}
 	
-	public Junction getInicio() {
+	public Road(String id, int length, int maxVel, Junction start, Junction end) {
+		super(id);
+		this.length = length;
+		this.maxSpeed = maxVel;
+		this.start = start;
+		this.end = end;
+		this.vehicles =  new MultiTreeMap<>((a, b) -> b - a);
+	}
+
+	public Junction getStart() {
 		return start;
 	}
 
-	public Junction getFinal() {
+	public Junction getEnd() {
 		return end;
 	}
 
-	public int getLongitud() {
-		return longitud;
+	public int getLength() {
+		return length;
 	}
 	
 	public List<Vehicle> getVehicles() {
 		return vehicles.valuesList();
 	}
 
-	public void newVehicleR(Vehicle v) {
+	public void addVehicle(Vehicle v) {
 		vehicles.putValue(0, v);
 	}
 
 	public void removeVehicle(Vehicle v) {
-		vehicles.removeValue(longitud, v);
+		vehicles.removeValue(length, v);
 	}
 
-	public int calcularVelBase() {
+	public int calculateSpeedBase() {
 		long n = vehicles.sizeOfValues();
-		if (n < 1)
-			n = 1;
-		if (maxVel < (maxVel / n) + 1)
-			return maxVel;
-		return (maxVel / (int) n) + 1;
+		n = (n<1) ? 1 : n;
+		if (maxSpeed < (maxSpeed / n) + 1) {
+			return maxSpeed;
+		}
+		return (maxSpeed / (int) n) + 1;
 	}
 
-	public void avanza() {
+	public void advance() {
 		MultiTreeMap<Integer, Vehicle> nuevos = new MultiTreeMap<>((a, b) -> b-a);
-		int velocidadBase = calcularVelBase();
+		int velocidadBase = calculateSpeedBase();
 		int factorReduccion = 1;
 		for (Vehicle v : vehicles.innerValues()) {
-			if(factorReduccion == 1)
-				if(v.getTiempoAveria() != 0)
+			if(factorReduccion == 1) {
+				if(v.getFaultyTime() != 0) {
 					factorReduccion=2;
-			if(v.getLocation() < longitud){
-				if (v.getTiempoAveria() == 0)
-					v.setVelocidadActual(velocidadBase / factorReduccion);
-				v.avanza();
+				}
+			}
+			if(v.getLocation() < length){
+				if (v.getFaultyTime() == 0) {
+					v.setCurrentSpeed(velocidadBase / factorReduccion);
+				}
+				v.advance();
 			}
 			nuevos.putValue(v.getLocation(), v);
 		}
@@ -79,8 +82,9 @@ public class Road extends SimObject implements Describable{
 			meter.append(v.getFillVehiculo() + ",");
 		}
 		
-		if (!vehicles.isEmpty())
+		if (!vehicles.isEmpty()) {
 			meter.delete(meter.length() - 1, meter.length());
+		}
 		out.put("state", meter.toString());
 	}
 
@@ -93,11 +97,13 @@ public class Road extends SimObject implements Describable{
 		out.put("ID", id);
 		out.put("Source", start.getId());
 		out.put("Target", end.getId());
-		out.put("Length", ""+longitud);
-		out.put("Max Speed", ""+maxVel);
+		out.put("Length", ""+length);
+		out.put("Max Speed", ""+maxSpeed);
 		StringBuilder sb = new StringBuilder();
 		vehicles.valuesList().forEach(v -> sb.append(v.getId() + ","));
-		if(sb.length() != 0) sb.delete(sb.length() - 1, sb.length());
+		if(sb.length() != 0) {
+			sb.delete(sb.length() - 1, sb.length());
+		}
 		out.put("Vehicles", "[" + sb.toString() + "]");
 	}
 }

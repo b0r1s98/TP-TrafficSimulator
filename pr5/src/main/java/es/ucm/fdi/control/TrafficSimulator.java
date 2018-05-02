@@ -24,8 +24,9 @@ public class TrafficSimulator {
 	}
 
 	public void addEvent(Event e) {
-		if (e.getTime() < timeCounter)
+		if (e.getTime() < timeCounter) {
 			throw new IllegalArgumentException("We don't travel back in time!");
+		}
 		events.putValue(e.getTime(), e);
 		fireUpdateEvent(EventType.NEW_EVENT, "");
 	}
@@ -34,34 +35,43 @@ public class TrafficSimulator {
 		events.clear();
 	}
 
-	public void run(int numSteps, OutputStream out) {
+	public void run(int numSteps, OutputStream out) throws IOException {
 		int timeLimit = timeCounter + numSteps - 1;
-		try {
-			while (timeCounter <= timeLimit) {
-				List<Event> nowEvents = events.get(timeCounter);
-				if (nowEvents != null)
-					for (Event e : nowEvents)
-						e.execute(objects);
-				List<Road> roads = objects.getRoads();
-				for (Road r : roads)
-					r.avanza();
-				List<Junction> junctions = objects.getJunctions();
-				for (Junction j : junctions)
-					j.avanza();
-				
-				timeCounter++;
-				fireUpdateEvent(EventType.ADVANCED, "");
-				
-				generateReport(out);
+		while (timeCounter <= timeLimit) {
+			List<Event> nowEvents = events.get(timeCounter);
+			if (nowEvents != null) {
+				for (Event e : nowEvents) {
+					e.execute(objects);
+				}
 			}
-		} catch (SimulatorException e) {
-			System.out.println(e.getMessage());
-			fireUpdateEvent(EventType.ERROR, e.getMessage());
-		} catch (IOException e) {
-			System.out.println("Problems loading/saving");
-			fireUpdateEvent(EventType.ERROR, "Problems loading/saving");
+			
+			for (Road r : objects.getRoads()) {
+				r.advance();
+			}
+			
+			for (Junction j :  objects.getJunctions()) {
+				j.advance();
+			}
+			
+			timeCounter++;
+			fireUpdateEvent(EventType.ADVANCED, "");
+			
+			try {
+				generateReport(out, objects.getJunctions(), objects.getRoads(), objects.getVehicles());
+			}
+			catch (SimulatorException e) {
+				fireUpdateEvent(EventType.ERROR, e.getMessage());
+			}
 		}
-		
+	}
+	
+	public void generateReport(OutputStream out, List<Junction> junctions,
+			List<Road> roads, List<Vehicle> vehicles) throws IOException {
+		Ini report = new Ini();
+		addSectionsFor(junctions, report);
+		addSectionsFor(roads, report);
+		addSectionsFor(vehicles, report);
+		report.store(out);
 	}
 
 	private void addSectionsFor(List<? extends SimObject> it, Ini report) {
@@ -74,16 +84,6 @@ public class TrafficSimulator {
 		}
 	}
 
-	public void generateReport(OutputStream out) throws IOException {
-		Ini report = new Ini();
-		addSectionsFor(objects.getJunctions(), report);
-		addSectionsFor(objects.getRoads(), report);
-		addSectionsFor(objects.getVehicles(), report);
-		report.store(out);
-	}
-
-	// Nuevo -------------------------------------------------------------
-	//Falta por avisar si error
 	public void reset(){
 		clear();
 		fireUpdateEvent(EventType.RESET, "");
@@ -94,26 +94,26 @@ public class TrafficSimulator {
 		this.timeCounter = 0;
 	}
 
-	private List<Listener> listeners = new ArrayList<>();
+	private List<SimulatorListener> listeners = new ArrayList<>();
 
-	public void addSimulatorListener(Listener l) {
+	public void addSimulatorListener(SimulatorListener l) {
 		listeners.add(l);
 		UpdateEvent ue = new UpdateEvent(EventType.REGISTERED);
 		SwingUtilities.invokeLater(()->l.update(ue, ""));
 	}
 
-	public void removeListener(Listener l) {
+	public void removeListener(SimulatorListener l) {
 		listeners.remove(l);
 	}
 
 	private void fireUpdateEvent(EventType type, String error) {
 		UpdateEvent ue = new UpdateEvent(type);
-		for(Listener l : listeners){
+		for(SimulatorListener l : listeners){
 			l.update(ue, error);
 		}
 	}
 
-	public interface Listener {
+	public interface SimulatorListener {
 		void update(UpdateEvent ue, String error);
 	}
 
@@ -144,14 +144,5 @@ public class TrafficSimulator {
 			return timeCounter;
 		}
 	}
-
-	public RoadMap getRoadMap() {
-		return objects;
-	}
-
-	public List<Event> getEvents(){
-		return events.valuesList();
-	}
-	
 	
 }

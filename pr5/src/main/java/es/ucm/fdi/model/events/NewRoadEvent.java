@@ -32,14 +32,16 @@ public class NewRoadEvent extends Event {
 
 	@Override
 	public void execute(RoadMap things) {
-		if (things.getObject(id) != null)
+		if (things.getObject(id) != null) {
 			throw new SimulatorException("Ups, " + id + " already exists");
+		}
 
 		Junction a = things.getJunction(src);
 		Junction b = things.getJunction(dest);
-		if (a == null || b == null)
-			throw new SimulatorException("Roads are not rainbows!: " + id + "=("
+		if (a == null || b == null) {
+			throw new SimulatorException("A junction is missing: " + id + "=("
 					+ src + "," + dest + ")");
+		}
 
 		Road r = new Road(id, length, maxSpeed, a, b);
 		a.newOutgoing(r);
@@ -53,11 +55,11 @@ public class NewRoadEvent extends Event {
 			return "new_road".equals(title) && "".equals(type);
 		}
 
-		public Event fill(Map<String, String> map) {
+		public Event parse(Map<String, String> map) {
 			try {
-				String id = checkId(map);
-
 				int time = checkNoNegativeIntOptional("time", map);
+				
+				String id = checkId(map);
 
 				String ideJunctionSurc = checkContains("src",map);
 
@@ -69,11 +71,9 @@ public class NewRoadEvent extends Event {
 
 				return new NewRoadEvent(time, id, maxSpeed, length,
 						ideJunctionSurc, ideJunctionDest);
-			} catch (IllegalArgumentException e) {
-				throw e;
 			} catch (Exception e) {
 				throw new IllegalArgumentException(
-						"Incorrect arguments for new_road");
+						"Incorrect arguments for new_road", e);
 			}
 		}
 	}

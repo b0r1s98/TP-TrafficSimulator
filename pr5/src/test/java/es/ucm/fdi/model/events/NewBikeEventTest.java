@@ -26,7 +26,7 @@ public class NewBikeEventTest {
 			test.put("itinerary", "j1,j2,j3");
 			test.put("type", "bike");
 			NewBikeEvent.Builder r = new NewBikeEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por tiempo no válido\n");
 
 		} catch (Exception e) {
@@ -40,7 +40,7 @@ public class NewBikeEventTest {
 			test.put("itinerary", "j1,j2,j3");
 			test.put("type", "bike");
 			NewBikeEvent.Builder r = new NewBikeEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por id no válida\n");
 
 		} catch (Exception e) {
@@ -54,7 +54,7 @@ public class NewBikeEventTest {
 			test.put("itinerary", "j1,j2,j3");
 			test.put("type", "bike");
 			NewBikeEvent.Builder r = new NewBikeEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por velocidad no válida.\n");
 
 		} catch (Exception e) {
@@ -68,7 +68,7 @@ public class NewBikeEventTest {
 			test.put("itinerary", "j1,j2,j3");
 			test.put("type", "bike");
 			NewBikeEvent.Builder r = new NewBikeEvent.Builder();
-			Event e = r.fill(test);
+			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			Junction J1=new Junction("j1");
 			J1.newOutgoing(new Road("r1",10,5,J1,new Junction("j2")));
@@ -88,7 +88,7 @@ public class NewBikeEventTest {
 			test.put("itinerary", "j1,j2,j3");
 			test.put("type", "bike");
 			NewBikeEvent.Builder r = new NewBikeEvent.Builder();
-			Event e = r.fill(test);
+			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			s.addJunction(new Junction("j1"));
 			s.addJunction(new Junction("j2"));

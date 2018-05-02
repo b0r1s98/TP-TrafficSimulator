@@ -17,15 +17,15 @@ public class RoundRobin extends Junction {
 	
 	public void newIncoming(Road r) {
 		RoundRobin.IncomingRoad ir = new IncomingRoad(r.getId(),maxTime);
-		saberInc.put(r, ir);
-		entrantes.add(ir);
-		semaforo = entrantes.size()-1;
-		entrantes.get(semaforo).semaforoVerde = true;
+		knowIncoming.put(r, ir);
+		incoming.add(ir);
+		trafficLight = incoming.size()-1;
+		incoming.get(trafficLight).semaforoVerde = true;
 	}
 	
-	public void avanza() {
-		if (!entrantes.isEmpty()) {
-			IncomingRoad roadGreen = (IncomingRoad) entrantes.get(semaforo);
+	public void advance() {
+		if (!incoming.isEmpty()) {
+			IncomingRoad roadGreen = (IncomingRoad) incoming.get(trafficLight);
 			if (!roadGreen.cola.isEmpty()) {
 				Vehicle lucky = roadGreen.cola.getFirst();
 				lucky.getRoad().removeVehicle(lucky);
@@ -36,28 +36,32 @@ public class RoundRobin extends Junction {
 			
 			roadGreen.timeUnitsUsed++;
 			
-			if(roadGreen.timeUnitsUsed == roadGreen.timeInterval)
-				avanzaSemaforo();
+			if(roadGreen.timeUnitsUsed == roadGreen.timeInterval) {
+				advanceTrafficLights();
+			}
 		}
 	}
 	
-	protected void avanzaSemaforo(){
-		IncomingRoad roadGreen = (IncomingRoad) entrantes.get(semaforo);
+	protected void advanceTrafficLights(){
+		IncomingRoad roadGreen = (IncomingRoad) incoming.get(trafficLight);
 		roadGreen.semaforoVerde = false;
 		
-		if(roadGreen.used == roadGreen.timeUnitsUsed)
+		if(roadGreen.used == roadGreen.timeUnitsUsed) {
 			roadGreen.timeInterval = Math.min(roadGreen.timeInterval + 1, maxTime);
+		}
 		
-		if(roadGreen.used == 0)
+		if(roadGreen.used == 0){
 			roadGreen.timeInterval = Math.max(roadGreen.timeInterval - 1, minTime);
+		}
 		
 		
 		roadGreen.timeUnitsUsed = 0;
 		
-		semaforo++;
-		if (semaforo == entrantes.size())
-			semaforo = 0;
-		entrantes.get(semaforo).semaforoVerde = true;
+		trafficLight++;
+		if (trafficLight == incoming.size()) {
+			trafficLight = 0;
+		}
+		incoming.get(trafficLight).semaforoVerde = true;
 	}
 	
 	protected void fillReportDetails(Map<String, String> out) {
@@ -81,7 +85,9 @@ public class RoundRobin extends Junction {
 		protected String semaforoReport(){
 			StringBuilder r = new StringBuilder();
 			r.append(super.semaforoReport());
-			if(semaforoVerde) r.append(":" + (timeInterval - timeUnitsUsed));
+			if(semaforoVerde) {
+				r.append(":" + (timeInterval - timeUnitsUsed));
+			}
 			return r.toString();
 		}
 	}

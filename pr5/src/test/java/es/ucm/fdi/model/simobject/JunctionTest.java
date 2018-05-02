@@ -29,16 +29,16 @@ public class JunctionTest {
 		test.newVehicle(v);
 		test.newVehicle(v1);
 		test.newVehicle(v2);
-		test.avanza();
+		test.advance();
 		assertTrue("El método avanza no funciona bien",
 				v.getRoad() == r2 && v1.getRoad() == r1 && v2.getRoad() == r1);
-		test.avanza();
+		test.advance();
 		assertTrue("El método avanza no funciona bien", v1.getRoad() == r2
 				&& v2.getRoad() == r1);
 		test = itinerary.get(2);
 		test.newVehicle(v);
 		test.newVehicle(v1);
-		test.avanza();
+		test.advance();
 		assertTrue("No hace que un vehículo llegue",
 				v.getArrived() && !v1.getArrived());
 	}

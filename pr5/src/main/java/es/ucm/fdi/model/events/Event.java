@@ -26,7 +26,7 @@ public abstract class Event implements Describable{
 
 		public abstract boolean canParse(String title, String type);
 
-		public abstract Event fill(Map<String, String> map);
+		public abstract Event parse(Map<String, String> map);
 
 		default boolean isValidId(String id) {
 			return id.matches("[a-zA-Z0-9_]+");
@@ -34,33 +34,39 @@ public abstract class Event implements Describable{
 
 		default String checkId(Map<String, String> map) {
 			String id = map.get("id");
-			if (id == null)
+			if (id == null) {
 				throw new IllegalArgumentException("Missing id");
-			if (!isValidId(id))
+			}
+			if (!isValidId(id)) {
 				throw new IllegalArgumentException("Invalid id");
+			}
 			return id;
 		}
 
 		default int checkNoNegativeIntOptional(String s, Map<String, String> map) {
 			int check = (map.containsKey(s) ? Integer.parseInt(map.get(s)) : 0);
-			if (check < 0)
+			if (check < 0) {
 				throw new IllegalArgumentException("Negative " + s);
+			}
 			return check;
 		}
 
 		default int checkPositiveInt(String s, Map<String, String> map) {
 			String num = map.get(s);
-			if (num == null)
+			if (num == null) {
 				throw new IllegalArgumentException("Missing " + s);
+			}
 			int check = Integer.parseInt(num);
-			if (check <= 0)
+			if (check <= 0) {
 				throw new IllegalArgumentException("No positive " + s);
+			}
 			return check;
 		}
 
 		default String checkContains(String s, Map<String, String> map) {
-			if (!map.containsKey(s))
+			if (!map.containsKey(s)) {
 				throw new IllegalArgumentException("Missing " + s);
+			}
 			return map.get(s);
 		}
 

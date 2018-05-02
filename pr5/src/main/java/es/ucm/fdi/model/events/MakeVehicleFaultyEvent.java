@@ -8,12 +8,12 @@ import es.ucm.fdi.model.simobject.Vehicle;
 
 public class MakeVehicleFaultyEvent extends Event {
 	
-	protected int tiempoAveria;
+	protected int faultyTime;
 	protected String vehicles;
 
-	public MakeVehicleFaultyEvent(int time, int tiempoAveria, String vehicles) {
+	public MakeVehicleFaultyEvent(int time, int faultyTime, String vehicles) {
 		super(time);
-		this.tiempoAveria = tiempoAveria;
+		this.faultyTime = faultyTime;
 		this.vehicles = vehicles;
 	}
 	
@@ -28,9 +28,10 @@ public class MakeVehicleFaultyEvent extends Event {
 
 		for (String vehicle : arrayVehicles) {
 			Vehicle unlucky = things.getVehicle(vehicle);
-			if (unlucky == null)
+			if (unlucky == null) {
 				throw new SimulatorException("Hitting the air");
-			unlucky.setTiempoAveria(tiempoAveria);
+			}
+			unlucky.setFaultyTime(faultyTime);
 		}
 	}
 
@@ -40,19 +41,18 @@ public class MakeVehicleFaultyEvent extends Event {
 			return "make_vehicle_faulty".equals(title) && "".equals(type);
 		}
 
-		public Event fill(Map<String, String> map) {
+		public Event parse(Map<String, String> map) {
 			try {
-				
 				int time = checkNoNegativeIntOptional("time", map);
 				
-				int tiempoAveria = checkPositiveInt("duration", map);
+				int faultyTime = checkPositiveInt("duration", map);
 
-				String listaIds = checkContains("vehicles", map);
+				String idsList = checkContains("vehicles", map);
 
-				return new MakeVehicleFaultyEvent(time, tiempoAveria, listaIds);
+				return new MakeVehicleFaultyEvent(time, faultyTime, idsList);
 			} catch (Exception e) {
 				throw new IllegalArgumentException(
-						"Incorrect arguments for make_vehicle_faulty");
+						"Incorrect arguments for make_vehicle_faulty", e);
 			}
 		}
 	}

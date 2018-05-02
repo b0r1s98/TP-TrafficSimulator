@@ -13,10 +13,10 @@ public class Car extends Vehicle {
 	protected int maxFaultDuration;
 	protected Random numRand;
 
-	public Car(int velMax, List<Junction> cruc, String id, String type,
+	public Car(int speedMax, List<Junction> itinerary, String id, String type,
 			int resistanceKm, double faultProbability, int maxFaultDuration,
 			long seed) {
-		super(velMax, cruc, id);
+		super(speedMax, itinerary, id);
 		this.type = type;
 		this.resistanceKm = resistanceKm;
 		this.kmSinceFault = 0;
@@ -25,27 +25,27 @@ public class Car extends Vehicle {
 		this.numRand = new Random(seed);
 	}
 
-	public void avanza() {
-		if (tiempoAveria == 0 && kmSinceFault > resistanceKm
+	public void advance() {
+		if (faultyTime == 0 && kmSinceFault > resistanceKm
 				&& numRand.nextDouble() < faultProbability) {
-			setTiempoAveria(numRand.nextInt(maxFaultDuration) + 1);
+			setFaultyTime(numRand.nextInt(maxFaultDuration) + 1);
 		}
 
-		if (tiempoAveria > 0) {
-			tiempoAveria--;
+		if (faultyTime > 0) {
+			faultyTime--;
 			kmSinceFault = 0;
 		} else {
-			if (localizacion + velActual >= actual.getLongitud()) {
-				kilometrage += actual.getLongitud() - localizacion;
-				kmSinceFault += actual.getLongitud() - localizacion;
-				localizacion = actual.getLongitud();
-				velActual = 0;
+			if (location + speed >= current.getLength()) {
+				kilometers += current.getLength() - location;
+				kmSinceFault += current.getLength() - location;
+				location = current.getLength();
+				speed = 0;
 
-				actual.getFinal().newVehicle(this);
+				current.getEnd().newVehicle(this);
 			} else {
-				kilometrage += velActual;
-				kmSinceFault += velActual;
-				localizacion += velActual;
+				kilometers += speed;
+				kmSinceFault += speed;
+				location += speed;
 			}
 		}
 	}

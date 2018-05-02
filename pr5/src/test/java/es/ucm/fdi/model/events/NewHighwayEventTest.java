@@ -24,7 +24,7 @@ public class NewHighwayEventTest {
 			test.put("typè", "lanes");
 			test.put("lanes", "2");
 			NewHighwayEvent.Builder r = new NewHighwayEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por tiempo no válido\n");
 
 		} catch (Exception e) {
@@ -41,7 +41,7 @@ public class NewHighwayEventTest {
 			test.put("typè", "lanes");
 			test.put("lanes", "2");
 			NewHighwayEvent.Builder r = new NewHighwayEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por id no válida\n");
 
 		} catch (Exception e) {
@@ -58,7 +58,7 @@ public class NewHighwayEventTest {
 			test.put("typè", "lanes");
 			test.put("lanes", "2");
 			NewHighwayEvent.Builder r = new NewHighwayEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por velocidad no válida.\n");
 
 		} catch (Exception e) {
@@ -75,7 +75,7 @@ public class NewHighwayEventTest {
 			test.put("typè", "lanes");
 			test.put("lanes", "2");
 			NewHighwayEvent.Builder r = new NewHighwayEvent.Builder();
-			Event e = r.fill(test);
+			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			s.addJunction(new Junction("j1"));
 			s.addJunction(new Junction("j2"));

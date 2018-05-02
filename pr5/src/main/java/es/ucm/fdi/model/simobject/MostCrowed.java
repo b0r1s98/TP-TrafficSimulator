@@ -13,14 +13,14 @@ public class MostCrowed extends Junction {
 	
 	public void newIncoming(Road r) {
 		IncomingRoad ir = new IncomingRoad(r.getId());
-		saberInc.put(r, ir);
-		entrantes.add(ir);
-		avanzaSemaforo();
+		knowIncoming.put(r, ir);
+		incoming.add(ir);
+		advanceTrafficLights();
 	}
 
-	public void avanza() {
-		if (!entrantes.isEmpty()) {
-			IncomingRoad roadGreen = (IncomingRoad) entrantes.get(semaforo);
+	public void advance() {
+		if (!incoming.isEmpty()) {
+			IncomingRoad roadGreen = (IncomingRoad) incoming.get(trafficLight);
 			if (!roadGreen.cola.isEmpty()) {
 				Vehicle lucky = roadGreen.cola.getFirst();
 				lucky.getRoad().removeVehicle(lucky);
@@ -30,26 +30,27 @@ public class MostCrowed extends Junction {
 			
 			roadGreen.timeUnitsUsed++;
 			
-			if (roadGreen.timeUnitsUsed == roadGreen.timeInterval) 
-				avanzaSemaforo();
+			if (roadGreen.timeUnitsUsed == roadGreen.timeInterval) {
+				advanceTrafficLights();
+			}
 		}
 	}
 	
-	protected void avanzaSemaforo(){
-		IncomingRoad roadGreen = (IncomingRoad) entrantes.get(semaforo);
+	protected void advanceTrafficLights(){
+		IncomingRoad roadGreen = (IncomingRoad) incoming.get(trafficLight);
 		roadGreen.semaforoVerde = false;
 		
 		IncomingRoad moreVehicles = roadGreen;
-		int max = semaforo;
-		for(int i = 0; i<entrantes.size(); i++){
-			IncomingRoad r = (IncomingRoad) entrantes.get(i);
-			if((r.cola.size() > moreVehicles.cola.size() && i!=semaforo) || max == semaforo){
+		int max = trafficLight;
+		for(int i = 0; i<incoming.size(); i++) {
+			IncomingRoad r = (IncomingRoad) incoming.get(i);
+			if((r.cola.size() > moreVehicles.cola.size() && i!=trafficLight) || max == trafficLight){
 				moreVehicles = r;
 				max = i;
 			}
 		}
 		
-		semaforo = max;
+		trafficLight = max;
 		moreVehicles.semaforoVerde = true;
 		moreVehicles.timeInterval = Math.max(moreVehicles.cola.size() / 2, 1);
 		moreVehicles.timeUnitsUsed = 0;
@@ -74,8 +75,9 @@ public class MostCrowed extends Junction {
 		protected String semaforoReport() {
 			StringBuilder r = new StringBuilder();
 			r.append(super.semaforoReport());
-			if (semaforoVerde)
+			if (semaforoVerde) {
 				r.append(":" + (timeInterval - timeUnitsUsed));
+			}
 			return r.toString();
 		}
 	}

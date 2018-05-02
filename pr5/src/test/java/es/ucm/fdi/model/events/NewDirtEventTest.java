@@ -24,7 +24,7 @@ public class NewDirtEventTest {
 			test.put("typè", "dirt");
 
 			NewDirtEvent.Builder r = new NewDirtEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por tiempo no válido\n");
 
 		} catch (Exception e) {
@@ -41,7 +41,7 @@ public class NewDirtEventTest {
 			test.put("typè", "dirt");
 
 			NewDirtEvent.Builder r = new NewDirtEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por id no válida\n");
 
 		} catch (Exception e) {
@@ -57,7 +57,7 @@ public class NewDirtEventTest {
 			test.put("length", "30");
 			test.put("typè", "dirt");
 			NewDirtEvent.Builder r = new NewDirtEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por velocidad no válida.\n");
 
 		} catch (Exception e) {
@@ -73,7 +73,7 @@ public class NewDirtEventTest {
 			test.put("length", "30");
 			test.put("typè", "dirt");
 			NewDirtEvent.Builder r = new NewDirtEvent.Builder();
-			Event e = r.fill(test);
+			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			s.addJunction(new Junction("j1"));
 			s.addJunction(new Junction("j2"));

@@ -10,73 +10,81 @@ import es.ucm.fdi.model.Describable;
 import es.ucm.fdi.model.exceptions.SimulatorException;
 
 public class Junction extends SimObject implements Describable {
-	protected Map<Road, IncomingRoad> saberInc;
-	protected List<IncomingRoad> entrantes;
-	protected int semaforo;
-	protected Map<Junction, Road> saberSaliente;
+	protected Map<Road, IncomingRoad> knowIncoming;
+	protected List<IncomingRoad> incoming;
+	protected int trafficLight;
+	protected Map<Junction, Road> knowOutgoing;
 
 	public Junction(String id) {
 		super(id);
-		saberInc = new HashMap<>();
-		entrantes = new ArrayList<>();
-		semaforo = 0;
-		saberSaliente = new HashMap<>();
+		this.knowIncoming = new HashMap<>();
+		this.incoming = new ArrayList<>();
+		this.trafficLight = 0;
+		this.knowOutgoing = new HashMap<>();
 	}
 
 	public void newVehicle(Vehicle c) {
-		saberInc.get(c.getRoad()).cola.add(c);
+		knowIncoming.get(c.getRoad()).cola.add(c);
 	}
 
 	public void newOutgoing(Road r) {
-		saberSaliente.put(r.getFinal(), r);
+		knowOutgoing.put(r.getEnd(), r);
 	}
 
 	public void newIncoming(Road r) {
 		IncomingRoad ir = new IncomingRoad(r.getId());
-		saberInc.put(r, ir);
-		entrantes.add(ir);
-		semaforo = entrantes.size()-1;
+		knowIncoming.put(r, ir);
+		incoming.add(ir);
+		trafficLight = incoming.size()-1;
+	}
+	
+	public boolean isRoadGreen(Road r) {
+		return knowIncoming.get(r).semaforoVerde;
 	}
 
 	public void moveVehicleToNextRoad(Vehicle v) {
 		Junction nextJunction = v.getProxCruce();
 		if (nextJunction != null) {
-			Road r = saberSaliente.get(nextJunction);
-			if (r == null)
+			Road r = knowOutgoing.get(nextJunction);
+			if (r == null) {
 				throw new SimulatorException("A vehicle goes over ghost roads");
+			}
 			v.moveToNextRoad(r);
-		} else
+		} else {
 			v.arrived();
+		}
 	}
 
-	public void avanza() {
-		if (!entrantes.isEmpty()) {
-			IncomingRoad roadGreen = entrantes.get(semaforo);
+	public void advance() {
+		if (!incoming.isEmpty()) {
+			IncomingRoad roadGreen = incoming.get(trafficLight);
 			if (!roadGreen.cola.isEmpty()) {
 				Vehicle lucky = roadGreen.cola.getFirst();
 				lucky.getRoad().removeVehicle(lucky);
 				roadGreen.cola.pop();
 				moveVehicleToNextRoad(lucky);
 			}
-			avanzaSemaforo();
+			advanceTrafficLights();
 		}
 	}
 	
-	protected void avanzaSemaforo(){
-		IncomingRoad roadGreen = entrantes.get(semaforo);
+	protected void advanceTrafficLights(){
+		IncomingRoad roadGreen = incoming.get(trafficLight);
 		roadGreen.semaforoVerde = false;
-		semaforo++;
-		if (semaforo == entrantes.size())
-			semaforo = 0;
-		entrantes.get(semaforo).semaforoVerde = true;
+		trafficLight++;
+		if (trafficLight == incoming.size()) {
+			trafficLight = 0;
+		}
+		incoming.get(trafficLight).semaforoVerde = true;
 	}
 
 	protected void fillReportDetails(Map<String, String> out) {
 		StringBuilder reportJunct = new StringBuilder();
-		entrantes.forEach(r -> reportJunct.append(r.generateReport() + ","));
+		incoming.forEach(r -> reportJunct.append(r.generateReport() + ","));
 
-		if (entrantes.size() != 0)
+		if (incoming.size() != 0) {
 			reportJunct.delete(reportJunct.length() - 1, reportJunct.length());
+		}
 
 		out.put("queues", reportJunct.toString());
 	}
@@ -99,9 +107,9 @@ public class Junction extends SimObject implements Describable {
 		protected String generateReport() {
 			StringBuilder vehiculosCola = new StringBuilder();
 			cola.forEach(v -> vehiculosCola.append(v.getId() + ","));
-			if (cola.size() != 0)
-				vehiculosCola.delete(vehiculosCola.length() - 1,
-						vehiculosCola.length());
+			if (cola.size() != 0) {
+				vehiculosCola.delete(vehiculosCola.length() - 1, vehiculosCola.length());
+			}
 
 			StringBuilder r = new StringBuilder();
 			r.append("(" + id + ",");
@@ -113,10 +121,7 @@ public class Junction extends SimObject implements Describable {
 		}
 		
 		protected String semaforoReport(){
-			if (semaforoVerde)
-				return("green");
-			else
-				return("red");
+			return semaforoVerde ? "green" : "red";
 		}
 	}
 
@@ -125,12 +130,17 @@ public class Junction extends SimObject implements Describable {
 		out.put("ID", id);
 		StringBuilder reportJunct = new StringBuilder();
 		String green = "";
-		for(IncomingRoad ir : entrantes) {
-			if(ir.semaforoVerde) green = "[" + ir.generateReport() + "]";
-			else reportJunct.append(ir.generateReport() + ",");
+		for(IncomingRoad ir : incoming) {
+			if(ir.semaforoVerde) {
+				green = "[" + ir.generateReport() + "]";
+			}
+			else {
+				reportJunct.append(ir.generateReport() + ",");
+			}
 		}
-		if (reportJunct.length() != 0)
+		if (reportJunct.length() != 0) {
 			reportJunct.delete(reportJunct.length() - 1, reportJunct.length());
+		}
 		out.put("Green", green);
 		out.put("Red", "[" + reportJunct.toString() + "]");
 	}

@@ -34,14 +34,16 @@ public class NewCarEvent extends NewVehicleEvent {
 
 	@Override
 	public void execute(RoadMap things) {
-		if (things.getObject(id) != null)
+		if (things.getObject(id) != null) {
 			throw new SimulatorException("Ups, " + id + " already exists");
+		}
 
 		List<Junction> it = new ArrayList<>();
 		for (String s : junctions) {
 			Junction step = things.getJunction(s);
-			if (step == null)
+			if (step == null) {
 				throw new SimulatorException("A vehicle goes over ghost junctions");
+			}
 			it.add(step);
 		}
 		
@@ -59,42 +61,45 @@ public class NewCarEvent extends NewVehicleEvent {
 			return "new_vehicle".equals(title) && "car".equals(type);
 		}
 
-		public Event fill(Map<String, String> map) {
+		public Event parse(Map<String, String> map) {
 			try {
-				String id = checkId(map);
-
 				int time = checkNoNegativeIntOptional("time", map);
+				
+				String id = checkId(map);
 				
 				int maxSpeed = checkPositiveInt("max_speed", map);
 
 				String[] junctions = checkContains("itinerary", map).split(",");
-				if (junctions.length < 2)
+				if (junctions.length < 2) {
 					throw new SimulatorException("Missing destination");
+				}
 				
 				//Hasta aqui es comun
 				int resistanceKm = checkPositiveInt("resistance", map);
 				
 				double faultProbability = Double.parseDouble(map.get("fault_probability"));
-				if (faultProbability < 0)
+				if (faultProbability < 0) {
 					throw new IllegalArgumentException("Negative fault_probability");
-				if (faultProbability > 1)
+				}
+				if (faultProbability > 1) {
 					throw new IllegalArgumentException("Imposible fault_probability");
+				}
 				
 				int maxFaultDuration = checkPositiveInt("max_fault_duration", map);
 				
 				long seed = System.currentTimeMillis();
-				if(map.containsKey("seed"))
+				if(map.containsKey("seed")) {
 					seed = Long.parseLong(map.get("seed"));
-				if (seed <= 0)
+				}
+				if (seed <= 0) {
 					throw new IllegalArgumentException("No positive seed");
+				}
 				
 
 				return new NewCarEvent(time, id, maxSpeed, junctions, resistanceKm, faultProbability, maxFaultDuration, seed);
-			} catch (IllegalArgumentException e) {
-				throw e;
 			} catch (Exception e) {
 				throw new IllegalArgumentException(
-						"Incorrect arguments for new_vehicle");
+						"Incorrect arguments for new_vehicle", e);
 			}
 		}
 	}

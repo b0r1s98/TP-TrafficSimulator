@@ -19,7 +19,7 @@ public class NewMostCrowedEventTest {
 			test.put("id", "j1");
 			test.put("type", "mc");
 			NewMostCrowedEvent.Builder r = new NewMostCrowedEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por tiempo no válido\n");
 
 		} catch (Exception e) {
@@ -31,7 +31,7 @@ public class NewMostCrowedEventTest {
 			test.put("id", "j-1");
 			test.put("type", "mc");
 			NewMostCrowedEvent.Builder r = new NewMostCrowedEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por id no válida\n");
 
 		} catch (Exception e) {
@@ -44,7 +44,7 @@ public class NewMostCrowedEventTest {
 			test.put("id", "j1");
 			test.put("type", "mc");
 			NewMostCrowedEvent.Builder r = new NewMostCrowedEvent.Builder();
-			Event e = r.fill(test);
+			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			e.execute(s);
 		} catch (Exception e) {
@@ -57,7 +57,7 @@ public class NewMostCrowedEventTest {
 			test.put("id", "j1");
 			test.put("type", "mc");
 			NewMostCrowedEvent.Builder r = new NewMostCrowedEvent.Builder();
-			Event e = r.fill(test);
+			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			s.addJunction(new Junction("j1"));
 			e.execute(s);

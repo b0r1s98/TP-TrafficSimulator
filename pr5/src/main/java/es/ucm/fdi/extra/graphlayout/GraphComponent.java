@@ -53,7 +53,7 @@ public class GraphComponent extends JComponent {
 	/**
 	 * A map to store the location of each node
 	 */
-	Map<String, Point> _nodesPisitions;
+	private Map<String, Point> _nodesPisitions;
 
 	/**
 	 * width and height of the window when it was last resized. When change we
@@ -109,7 +109,8 @@ public class GraphComponent extends JComponent {
 			Point p2 = _nodesPisitions.get(e.getTarget().getId());
 
 			// draw the edge
-			Color arrowColor = Math.random() > 0.5 ? Color.RED : Color.GREEN;
+			//Color arrowColor = Math.random() > 0.5 ? Color.RED : Color.GREEN;
+			Color arrowColor = e.getColor();
 			drawArrowLine(g, p1.cX, p1.cY, p2.cX, p2.cY, 15, 5, Color.BLACK, arrowColor);
 
 			// draw dots as circles. Dots at the same location are drawn with circles of

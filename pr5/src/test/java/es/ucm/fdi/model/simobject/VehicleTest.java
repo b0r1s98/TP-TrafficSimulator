@@ -17,8 +17,8 @@ public class VehicleTest {
 		itinerary.add(new Junction("j3"));
 		Vehicle v = new Vehicle(5, itinerary, "v1");
 		Vehicle v1 = new Vehicle(15, itinerary, "v2");
-		v.setVelocidadActual(10);
-		v.setVelocidadActual(20);
+		v.setCurrentSpeed(10);
+		v.setCurrentSpeed(20);
 		Road r1 = new Road("r1", 30, 20, itinerary.get(0), itinerary.get(1));
 		Road r2 = new Road("r2", 15, 20, itinerary.get(1), itinerary.get(2));
 		itinerary.get(1).newIncoming(r1);
@@ -28,16 +28,16 @@ public class VehicleTest {
 
 		assertTrue("Fallo en moveToNextRoad", v.getRoad() == r1);
 
-		v.setVelocidadActual(10);
-		v1.setVelocidadActual(15);
-		v.avanza();
-		v1.avanza();
+		v.setCurrentSpeed(10);
+		v1.setCurrentSpeed(15);
+		v.advance();
+		v1.advance();
 		assertTrue("No van a buena velocidad",
 				v.getLocation() == 5 && v1.getLocation() == 15);
 
-		v.setTiempoAveria(2);
-		v.avanza();
+		v.setFaultyTime(2);
+		v.advance();
 		assertTrue("No hace lo que debería hacer con los estropeados",
-				v.getTiempoAveria() == 1);
+				v.getFaultyTime() == 1);
 	}
 }

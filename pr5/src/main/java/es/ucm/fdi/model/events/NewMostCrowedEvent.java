@@ -19,8 +19,9 @@ public class NewMostCrowedEvent extends NewJunctionEvent {
 	
 	@Override
 	public void execute(RoadMap things) {
-		if (things.getObject(id) != null)
+		if (things.getObject(id) != null) {
 			throw new SimulatorException("Ups, " + id + " already exists");
+		}
 		//Hasta aqui es igual
 		things.addJunction(new MostCrowed(id,"mc"));
 	}
@@ -31,20 +32,18 @@ public class NewMostCrowedEvent extends NewJunctionEvent {
 			return "new_junction".equals(title) && "mc".equals(type);
 		}
 
-		public Event fill(Map<String, String> map) {
+		public Event parse(Map<String, String> map) {
 			try {
-				String id = checkId(map);
-
 				int time = checkNoNegativeIntOptional("time", map);
 				
+				String id = checkId(map);
+
 				//Hasta aqui es igual
 
 				return new NewMostCrowedEvent(time, id);
-			} catch (IllegalArgumentException e) {
-				throw e;
 			} catch (Exception e) {
 				throw new IllegalArgumentException(
-						"Incorrect arguments for new_junction");
+						"Incorrect arguments for new_junction", e);
 			}
 		}
 	}

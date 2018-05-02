@@ -7,15 +7,15 @@ public class Bike extends Vehicle {
 
 	protected String type;
 
-	public Bike(int velMax, List<Junction> cruc, String id, String type) {
-		super(velMax, cruc, id);
+	public Bike(int speedMax, List<Junction> itinerary, String id, String type) {
+		super(speedMax, itinerary, id);
 		this.type = type;
 	}
 
-	public void setTiempoAveria(int n) {
-		if(velActual > velMaxima/2){
-			tiempoAveria += n;
-			velActual = 0;
+	public void setFaultyTime(int n) {
+		if(speed > speedMax/2) {
+			faultyTime += n;
+			speed = 0;
 		}
 	}
 	

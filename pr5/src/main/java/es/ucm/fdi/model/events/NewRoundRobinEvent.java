@@ -24,8 +24,9 @@ public class NewRoundRobinEvent extends NewJunctionEvent {
 	
 	@Override
 	public void execute(RoadMap things) {
-		if (things.getObject(id) != null)
+		if (things.getObject(id) != null) {
 			throw new SimulatorException("Ups, " + id + " already exists");
+		}
 		//Hasta aqui es igual
 		things.addJunction(new RoundRobin(id,minTime,maxTime, "rr"));
 	}
@@ -36,18 +37,20 @@ public class NewRoundRobinEvent extends NewJunctionEvent {
 			return "new_junction".equals(title) && "rr".equals(type);
 		}
 
-		public Event fill(Map<String, String> map) {
+		public Event parse(Map<String, String> map) {
 			try {
-				String id = checkId(map);
-
 				int time = checkNoNegativeIntOptional("time", map);
+				
+				String id = checkId(map);
 				
 				//Hasta aqui es igual
 				int maxTime = checkPositiveInt("max_time_slice", map);
 				
 				int minTime = checkPositiveInt("min_time_slice", map);
 				
-				if(minTime > maxTime) throw new IllegalArgumentException("max_time must be greater than min_time");
+				if(minTime > maxTime) {
+					throw new IllegalArgumentException("max_time must be greater than min_time");
+				}
 
 				return new NewRoundRobinEvent(time, id, minTime, maxTime);
 			} catch (IllegalArgumentException e) {

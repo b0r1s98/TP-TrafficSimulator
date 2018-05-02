@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 
@@ -22,6 +23,8 @@ import org.apache.commons.cli.ParseException;
 import es.ucm.fdi.control.Controller;
 import es.ucm.fdi.view.SimWindow;
 import es.ucm.fdi.ini.Ini;
+import es.ucm.fdi.ini.IniError;
+import es.ucm.fdi.model.exceptions.SimulatorException;
 
 public class Main {
 
@@ -166,16 +169,44 @@ public class Main {
 	 * 
 	 * @throws IOException
 	 */
-	private static void startBatchMode() throws IOException {
-		// TODO
-		// Add your code here. Note that the input argument where parsed and stored into
-		// corresponding fields.
-		OutputStream out;
-		if(_outFile != null) out = new FileOutputStream(_outFile);
-		else out = System.out;
-		if(_timeLimit == null) _timeLimit = _timeLimitDefaultValue;
-		Controller control = new Controller(new FileInputStream(_inFile), out, _timeLimit);
-		control.run();
+	private static void startBatchMode() {
+		try {
+			OutputStream out = System.out;
+			if(_outFile != null) {
+				try {
+					out = new FileOutputStream(_outFile);
+				} catch (FileNotFoundException e) {
+					System.out.println("Output file doesn't exist, reports will be redirected to console.");
+				}
+			}
+			
+			if(_timeLimit == null) {
+				_timeLimit = _timeLimitDefaultValue;
+			}
+			Controller control = new Controller();
+			InputStream in;
+			try {
+				in = new FileInputStream(_inFile);
+			} catch (FileNotFoundException e) {
+				throw new Exception("Input file doesn't exist", e);
+			}
+			
+			try {
+				control.loadEvents(in);
+			} catch (IOException | IniError | IllegalArgumentException e) {
+				throw new Exception("Incorrect event", e);
+			}
+			
+			try {
+				control.getSimulator().run(_timeLimit, out);
+			} catch (IOException | SimulatorException e) {
+				throw new Exception("Error simulating", e);
+			}
+			
+			
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
 	}
 	
 	private static void startGUIMode() {
@@ -185,8 +216,12 @@ public class Main {
 
 	private static void start(String[] args) throws IOException {
 		parseArgs(args);
-		if("gui".equals(_mode)) startGUIMode();
-		else startBatchMode();
+		if("gui".equals(_mode)) {
+			startGUIMode();
+		}
+		else {
+			startBatchMode();
+		}
 	}
 
 	public static void main(String[] args) throws IOException, InvocationTargetException, InterruptedException {

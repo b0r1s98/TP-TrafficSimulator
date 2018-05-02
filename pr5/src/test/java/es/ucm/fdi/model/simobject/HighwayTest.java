@@ -25,10 +25,10 @@ public class HighwayTest {
 		itinerary.get(2).newIncoming(r2);
 		v.moveToNextRoad(r1);
 		v1.moveToNextRoad(r1);
-		v.setTiempoAveria(2);
-		r1.avanza();
+		v.setFaultyTime(2);
+		r1.advance();
 		assertTrue("Velocidad inadecuada",
-				v.getVelocidadActual() == 0 && v1.getVelocidadActual() == 10);
+				v.getCurrentSpeed() == 0 && v1.getCurrentSpeed() == 10);
 	}
 
 }

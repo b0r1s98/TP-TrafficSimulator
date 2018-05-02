@@ -27,10 +27,10 @@ public class DirtTest {
 		v.moveToNextRoad(r1);
 		v1.moveToNextRoad(r1);
 		v2.moveToNextRoad(r1);
-		v.setTiempoAveria(2);
-		v1.setTiempoAveria(2);
-		r1.avanza();
-		assertTrue("Velocidad inadecuada", v2.getVelocidadActual() == 5);
+		v.setFaultyTime(2);
+		v1.setFaultyTime(2);
+		r1.advance();
+		assertTrue("Velocidad inadecuada", v2.getCurrentSpeed() == 5);
 	}
 
 }

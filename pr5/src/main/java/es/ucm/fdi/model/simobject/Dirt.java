@@ -8,31 +8,33 @@ public class Dirt extends Road {
 	
 	protected String type;
 
-	public Dirt(String ide, int lon, int maxv, Junction princ, Junction fin, String type) {
-		super(ide, lon, maxv, princ, fin);
+	public Dirt(String id, int length, int maxVel, Junction start,
+			Junction end, String type) {
+		super(id, length, maxVel, start, end);
 		this.type = type;
 	}
 	
-	public int calcularVelBase() {
-		return maxVel;
+	public int calculateSpeedBase() {
+		return maxSpeed;
 	}
-	
-	public void avanza() {
-		MultiTreeMap<Integer, Vehicle> nuevos = new MultiTreeMap<>((a, b) -> b-a);
-		int velocidadBase = calcularVelBase();
-		int factorReduccion = 1;
+
+	public void advance() {
+		MultiTreeMap<Integer, Vehicle> newVehicles = new MultiTreeMap<>((a, b) -> b-a);
+		int speedBase = calculateSpeedBase();
+		int reductionFactor = 1;
 		for (Vehicle v : vehicles.innerValues()) {
-			if(v.getTiempoAveria() != 0){
-				factorReduccion++;
+			if(v.getFaultyTime() != 0) {
+				reductionFactor++;
 			}
-			if(v.getLocation() < longitud){
-				if (v.getTiempoAveria() == 0)
-					v.setVelocidadActual(velocidadBase / factorReduccion);
-				v.avanza();
+			if(v.getLocation() < length) {
+				if (v.getFaultyTime() == 0) {
+					v.setCurrentSpeed(speedBase / reductionFactor);
+				}
+				v.advance();
 			}
-			nuevos.putValue(v.getLocation(), v);
+			newVehicles.putValue(v.getLocation(), v);
 		}
-		vehicles = nuevos;
+		vehicles = newVehicles;
 	}
 	
 	public void fillReportDetails(Map<String, String> out) {

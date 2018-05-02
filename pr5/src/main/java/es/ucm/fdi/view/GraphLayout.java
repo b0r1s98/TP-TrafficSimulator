@@ -1,6 +1,7 @@
 package es.ucm.fdi.view;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,15 +21,13 @@ import es.ucm.fdi.model.simobject.Vehicle;
 public class GraphLayout extends JPanel  {
 	
 	private GraphComponent _graphComp;
-	private RoadMap roadMap;
     
-	public GraphLayout(RoadMap roadMap) {
-		this.roadMap = roadMap;
-		_graphComp = new GraphComponent();
+	public GraphLayout() {
+		this._graphComp = new GraphComponent();
 		this.add(_graphComp, BorderLayout.CENTER);
 	}
 
-	protected void generateGraph() {	
+	public void generateGraph(RoadMap roadMap) {	
 		Graph g = new Graph();
 		Map<Junction, Node> js = new HashMap<>();
 		for (Junction j : roadMap.getJunctions()) {
@@ -37,7 +36,8 @@ public class GraphLayout extends JPanel  {
 			g.addNode(n);
 		}
 		for (Road r : roadMap.getRoads()) {
-			Edge e = new Edge(r.getId(),js.get(r.getInicio()),js.get(r.getFinal()), r.getLongitud());
+			Edge e = new Edge(r.getId(),js.get(r.getStart()),js.get(r.getEnd()), r.getLength(),
+					(r.getEnd().isRoadGreen(r) ? Color.GREEN : Color.RED));
 			for(Vehicle v : r.getVehicles()) {
 				e.addDot(new Dot(v.getId(), v.getLocation()));
 			}

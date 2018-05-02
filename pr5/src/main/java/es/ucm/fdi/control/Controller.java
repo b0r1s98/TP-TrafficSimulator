@@ -2,14 +2,22 @@ package es.ucm.fdi.control;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
-import es.ucm.fdi.model.events.*;
 import es.ucm.fdi.ini.Ini;
-import es.ucm.fdi.ini.IniError;
 import es.ucm.fdi.ini.IniSection;
+import es.ucm.fdi.model.events.Event;
+import es.ucm.fdi.model.events.MakeVehicleFaultyEvent;
+import es.ucm.fdi.model.events.NewBikeEvent;
+import es.ucm.fdi.model.events.NewCarEvent;
+import es.ucm.fdi.model.events.NewDirtEvent;
+import es.ucm.fdi.model.events.NewHighwayEvent;
+import es.ucm.fdi.model.events.NewJunctionEvent;
+import es.ucm.fdi.model.events.NewMostCrowedEvent;
+import es.ucm.fdi.model.events.NewRoadEvent;
+import es.ucm.fdi.model.events.NewRoundRobinEvent;
+import es.ucm.fdi.model.events.NewVehicleEvent;
 
 public class Controller {
 	private static Event.Builder[] avaliableEvents = {
@@ -21,6 +29,7 @@ public class Controller {
 			new MakeVehicleFaultyEvent.Builder() };
 
 	private TrafficSimulator simulation;
+	/*
 	private InputStream in;
 	private OutputStream out;
 	private int ticks;
@@ -31,24 +40,16 @@ public class Controller {
 		this.out = out;
 		this.ticks = ticks;
 	}
-	
+	*/
 	public Controller() {
 		this.simulation = new TrafficSimulator();
 	}
-
-	public void run() {
-		try {
-			loadEvents(in);
-			simulation.run(ticks, out);
-		} catch (IOException e) {
-			System.out.println("Problems loading/saving");
-		} catch (IniError e) {
-			System.out.println("Problems loading/saving: " + e.getMessage());
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-		}
+	/*
+	public void run() throws IOException {
+		loadEvents(in);
+		simulation.run(ticks, out);
 	}
-	
+	*/
 	public void loadEvents(InputStream input) throws IOException {
 		Ini init = new Ini(input);
 		List<IniSection> list = init.getSections();
@@ -58,15 +59,16 @@ public class Controller {
 			Map<String, String> map = i.getKeysMap();
 			for (Event.Builder b : avaliableEvents) {
 				if (b.canParse(i.getTag(), map.getOrDefault("type", ""))) {
-					simulation.addEvent(b.fill(map));
+					simulation.addEvent(b.parse(map));
 					found = true;
 					break;
 				}
 			}
 
-			if (!found)
+			if (!found) {
 				throw new IllegalArgumentException(
 						"Not sure about what is this: " + i.getTag());
+			}
 		}
 	}
 

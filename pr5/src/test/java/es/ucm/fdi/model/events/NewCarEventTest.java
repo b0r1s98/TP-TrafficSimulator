@@ -30,7 +30,7 @@ public class NewCarEventTest {
 			test.put("seed", "32");
 
 			NewCarEvent.Builder r = new NewCarEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por tiempo no válido\n");
 
 		} catch (Exception e) {
@@ -49,7 +49,7 @@ public class NewCarEventTest {
 			test.put("seed", "32");
 
 			NewCarEvent.Builder r = new NewCarEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por id no válida\n");
 
 		} catch (Exception e) {
@@ -68,7 +68,7 @@ public class NewCarEventTest {
 			test.put("seed", "32");
 
 			NewCarEvent.Builder r = new NewCarEvent.Builder();
-			r.fill(test);
+			r.parse(test);
 			fail("Se esperaba excepción por velocidad no válida.\n");
 
 		} catch (Exception e) {
@@ -87,7 +87,7 @@ public class NewCarEventTest {
 			test.put("seed", "32");
 
 			NewCarEvent.Builder r = new NewCarEvent.Builder();
-			Event e = r.fill(test);
+			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			Junction J1=new Junction("j1");
 			J1.newOutgoing(new Road("r1",10,5,J1,new Junction("j2")));
@@ -112,7 +112,7 @@ public class NewCarEventTest {
 			test.put("seed", "32");
 
 			NewCarEvent.Builder r = new NewCarEvent.Builder();
-			Event e = r.fill(test);
+			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			s.addJunction(new Junction("j1"));
 			s.addJunction(new Junction("j2"));

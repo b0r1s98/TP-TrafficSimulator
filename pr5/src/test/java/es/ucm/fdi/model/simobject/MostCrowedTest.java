@@ -36,16 +36,16 @@ public class MostCrowedTest {
 		v.moveToNextRoad(r1);
 		v1.moveToNextRoad(r1);
 		v2.moveToNextRoad(r1);
-		r3.avanza();
-		r3.avanza();
-		r1.avanza();
-		r1.avanza();
-		j1.avanza();
+		r3.advance();
+		r3.advance();
+		r1.advance();
+		r1.advance();
+		j1.advance();
 		assertTrue("No se ha puesto el primer semáforo en verde bien",
 				v1.getRoad() == r1);
-		j1.avanza();
+		j1.advance();
 		assertTrue("No ha cambiado el semáforo", c.getRoad() == r3);
-		j1.avanza();
+		j1.advance();
 		assertTrue("No ha cambiado el semáforo", v2.getRoad() == r1);
 
 	}
