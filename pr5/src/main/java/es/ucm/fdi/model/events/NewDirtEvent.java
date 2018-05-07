@@ -37,7 +37,7 @@ public class NewDirtEvent extends NewRoadEvent {
 		Road r = new Dirt(id, length, maxSpeed, a, b, "dirt");
 		// Esto vuelve a ser comun
 
-		a.newOutgoing(r);
+		a.addOutgoing(r);
 		b.newIncoming(r);
 		things.addRoad(r);
 	}

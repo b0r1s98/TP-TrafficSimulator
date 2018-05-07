@@ -3,17 +3,36 @@ package es.ucm.fdi.model.simobject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 
+ * An object to be simulated.
+ *
+ */
 public abstract class SimObject {
 	protected String id;
 
+	/**
+	 * Class constructor
+	 * 
+	 * @param i	simobject's name
+	 */
 	public SimObject(String id) {
 		this.id = id;
 	}
 
+	/**
+	 * @return simobject's name
+	 */
 	public String getId() {
 		return id;
 	}
-
+	
+	/**
+	 * Fills map for making the report of the simobject
+	 * 
+	 * @param time	currently time of the simulator
+	 * @return		map filled ready for report
+	 */
 	public Map<String, String> report(int time) {
 		Map<String, String> out = new LinkedHashMap<>();
 		out.put("", getReportHeader());
@@ -22,7 +41,7 @@ public abstract class SimObject {
 		fillReportDetails(out);
 		return out;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -53,7 +72,15 @@ public abstract class SimObject {
 		return true;
 	}
 
+	/**
+	 * Fills map with concrete information of the current simobject
+	 * 
+	 * @param out	map to be filled
+	 */
 	protected abstract void fillReportDetails(Map<String, String> out);
 
+	/**
+	 * @return string with the corresponding report header
+	 */
 	protected abstract String getReportHeader();
 }

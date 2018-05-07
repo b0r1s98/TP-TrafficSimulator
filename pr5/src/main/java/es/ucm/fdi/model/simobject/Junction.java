@@ -5,16 +5,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import es.ucm.fdi.model.Describable;
 import es.ucm.fdi.model.exceptions.SimulatorException;
 
+/**
+ * 
+ * A SimObject called Junction.
+ *
+ */
 public class Junction extends SimObject implements Describable {
 	protected Map<Road, IncomingRoad> knowIncoming;
 	protected List<IncomingRoad> incoming;
 	protected int trafficLight;
 	protected Map<Junction, Road> knowOutgoing;
 
+	/**
+	 * Class constructor
+	 * 
+	 * @param id	name of this junction
+	 */
 	public Junction(String id) {
 		super(id);
 		this.knowIncoming = new HashMap<>();
@@ -23,14 +34,30 @@ public class Junction extends SimObject implements Describable {
 		this.knowOutgoing = new HashMap<>();
 	}
 
-	public void newVehicle(Vehicle c) {
-		knowIncoming.get(c.getRoad()).cola.add(c);
+	/**
+	 * Adds vehicle to the corresponding incoming road queue
+	 * 
+	 * @param v	vehicle to be added
+	 */
+	public void newVehicle(Vehicle v) {
+		knowIncoming.get(v.getRoad()).queue.add(v);
 	}
 
-	public void newOutgoing(Road r) {
+	/**
+	 * Adds a road to knowOutgoing, map that given a junction,
+	 * gives the road that goes from this one to that junction
+	 * 
+	 * @param r road to be added
+	 */
+	public void addOutgoing(Road r) {
 		knowOutgoing.put(r.getEnd(), r);
 	}
 
+	/**
+	 * Adds a road to the junction
+	 * 
+	 * @param r road to be added
+	 */
 	public void newIncoming(Road r) {
 		IncomingRoad ir = new IncomingRoad(r.getId());
 		knowIncoming.put(r, ir);
@@ -38,10 +65,22 @@ public class Junction extends SimObject implements Describable {
 		trafficLight = incoming.size()-1;
 	}
 	
+	/**
+	 * Returns whether the corresponding incoming road
+	 * of this road is green or not
+	 * 
+	 * @param r road to be checked
+	 * @return corresponding boolean
+	 */
 	public boolean isRoadGreen(Road r) {
-		return knowIncoming.get(r).semaforoVerde;
+		return knowIncoming.get(r).trafficLightsGreen;
 	}
 
+	/**
+	 * Moves vehicle to next road
+	 * 
+	 * @param v vehicle to be moved
+	 */
 	public void moveVehicleToNextRoad(Vehicle v) {
 		Junction nextJunction = v.getProxCruce();
 		if (nextJunction != null) {
@@ -55,93 +94,108 @@ public class Junction extends SimObject implements Describable {
 		}
 	}
 
+	/**
+	 * Allows one vehicle in an incoming road in green
+	 *  to go to next road
+	 */
 	public void advance() {
 		if (!incoming.isEmpty()) {
 			IncomingRoad roadGreen = incoming.get(trafficLight);
-			if (!roadGreen.cola.isEmpty()) {
-				Vehicle lucky = roadGreen.cola.getFirst();
+			if (!roadGreen.queue.isEmpty()) {
+				Vehicle lucky = roadGreen.queue.getFirst();
 				lucky.getRoad().removeVehicle(lucky);
-				roadGreen.cola.pop();
+				roadGreen.queue.pop();
 				moveVehicleToNextRoad(lucky);
 			}
 			advanceTrafficLights();
 		}
 	}
 	
+	/**
+	 * Changes traffic lights color
+	 */
 	protected void advanceTrafficLights(){
 		IncomingRoad roadGreen = incoming.get(trafficLight);
-		roadGreen.semaforoVerde = false;
+		roadGreen.trafficLightsGreen = false;
 		trafficLight++;
 		if (trafficLight == incoming.size()) {
 			trafficLight = 0;
 		}
-		incoming.get(trafficLight).semaforoVerde = true;
+		incoming.get(trafficLight).trafficLightsGreen = true;
 	}
 
+	@Override
 	protected void fillReportDetails(Map<String, String> out) {
-		StringBuilder reportJunct = new StringBuilder();
-		incoming.forEach(r -> reportJunct.append(r.generateReport() + ","));
-
-		if (incoming.size() != 0) {
-			reportJunct.delete(reportJunct.length() - 1, reportJunct.length());
-		}
-
-		out.put("queues", reportJunct.toString());
+		String queues = incoming.stream()
+				.map(IncomingRoad::generateReport)
+				.collect(Collectors.joining(","));
+		out.put("queues", queues);
 	}
 
+	@Override
 	protected String getReportHeader() {
 		return "junction_report";
 	}
 
+	/**
+	 * 
+	 * Manages the vehicles that are entering a junction
+	 *
+	 */
 	protected class IncomingRoad {
-		protected ArrayDeque<Vehicle> cola;
+		protected ArrayDeque<Vehicle> queue;
 		protected String id;
-		protected boolean semaforoVerde;
+		protected boolean trafficLightsGreen;
 
+		/**
+		 * Class constructor
+		 * 
+		 * @param r	name of the road
+		 */
 		public IncomingRoad(String r) {
-			cola = new ArrayDeque<>();
+			queue = new ArrayDeque<>();
 			id = r;
-			semaforoVerde = false;
+			trafficLightsGreen = false;
 		}
 
+		/**
+		 * Generates report of all the vehicles in the queue
+		 * 
+		 * @return this report
+		 */
 		protected String generateReport() {
-			StringBuilder vehiculosCola = new StringBuilder();
-			cola.forEach(v -> vehiculosCola.append(v.getId() + ","));
-			if (cola.size() != 0) {
-				vehiculosCola.delete(vehiculosCola.length() - 1, vehiculosCola.length());
-			}
+			String vehiclesQueue = queue.stream()
+					.map(Vehicle::getId)
+					.collect(Collectors.joining(","));
 
-			StringBuilder r = new StringBuilder();
-			r.append("(" + id + ",");
-			r.append(semaforoReport());
-			r.append(",[" + vehiculosCola + "])");
-
-			return r.toString();
-			//return "("+id+","+semaforoReport()+",["+String.join(",", cola)
+			return "(" + id + "," + trafficLightsReport()
+					+ ",[" + vehiclesQueue + "])";
 		}
 		
-		protected String semaforoReport(){
-			return semaforoVerde ? "green" : "red";
+		/**
+		 * @return whether the traffic lights are green or red
+		 */
+		protected String trafficLightsReport(){
+			return trafficLightsGreen ? "green" : "red";
 		}
 	}
 
 	@Override
 	public void describe(Map<String, String> out) {
 		out.put("ID", id);
-		StringBuilder reportJunct = new StringBuilder();
-		String green = "";
-		for(IncomingRoad ir : incoming) {
-			if(ir.semaforoVerde) {
-				green = "[" + ir.generateReport() + "]";
-			}
-			else {
-				reportJunct.append(ir.generateReport() + ",");
-			}
-		}
-		if (reportJunct.length() != 0) {
-			reportJunct.delete(reportJunct.length() - 1, reportJunct.length());
-		}
+		
+		String red = incoming.stream()
+				.filter(ir -> !ir.trafficLightsGreen)
+				.map(IncomingRoad::generateReport)
+				.collect(Collectors.joining(","));
+		
+		String green = incoming.stream()
+				.filter(ir -> ir.trafficLightsGreen)
+				.map(IncomingRoad::generateReport)
+				.findAny()
+				.orElse("[]");
+		
 		out.put("Green", green);
-		out.put("Red", "[" + reportJunct.toString() + "]");
+		out.put("Red", "[" + red + "]");
 	}
 }

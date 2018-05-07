@@ -2,15 +2,27 @@ package es.ucm.fdi.model.simobject;
 
 import java.util.Map;
 
+/**
+ * 
+ * A SimObject called MostCrowed.
+ *
+ */
 public class MostCrowed extends Junction {
 	
 	protected String type;
 
+	/**
+	 * Class constructor
+	 * 
+	 * @param id	name of this junction
+	 * @param type	string containing "mc"
+	 */
 	public MostCrowed(String id, String type) {
 		super(id);
 		this.type = type;
 	}
 	
+	@Override
 	public void newIncoming(Road r) {
 		IncomingRoad ir = new IncomingRoad(r.getId());
 		knowIncoming.put(r, ir);
@@ -18,13 +30,14 @@ public class MostCrowed extends Junction {
 		advanceTrafficLights();
 	}
 
+	@Override
 	public void advance() {
 		if (!incoming.isEmpty()) {
 			IncomingRoad roadGreen = (IncomingRoad) incoming.get(trafficLight);
-			if (!roadGreen.cola.isEmpty()) {
-				Vehicle lucky = roadGreen.cola.getFirst();
+			if (!roadGreen.queue.isEmpty()) {
+				Vehicle lucky = roadGreen.queue.getFirst();
 				lucky.getRoad().removeVehicle(lucky);
-				roadGreen.cola.pop();
+				roadGreen.queue.pop();
 				moveVehicleToNextRoad(lucky);
 			}
 			
@@ -36,49 +49,61 @@ public class MostCrowed extends Junction {
 		}
 	}
 	
+	@Override
 	protected void advanceTrafficLights(){
 		IncomingRoad roadGreen = (IncomingRoad) incoming.get(trafficLight);
-		roadGreen.semaforoVerde = false;
+		roadGreen.trafficLightsGreen = false;
 		
 		IncomingRoad moreVehicles = roadGreen;
 		int max = trafficLight;
 		for(int i = 0; i<incoming.size(); i++) {
 			IncomingRoad r = (IncomingRoad) incoming.get(i);
-			if((r.cola.size() > moreVehicles.cola.size() && i!=trafficLight) || max == trafficLight){
+			if((r.queue.size() > moreVehicles.queue.size() && i!=trafficLight) || max == trafficLight){
 				moreVehicles = r;
 				max = i;
 			}
 		}
 		
 		trafficLight = max;
-		moreVehicles.semaforoVerde = true;
-		moreVehicles.timeInterval = Math.max(moreVehicles.cola.size() / 2, 1);
+		moreVehicles.trafficLightsGreen = true;
+		moreVehicles.timeInterval = Math.max(moreVehicles.queue.size() / 2, 1);
 		moreVehicles.timeUnitsUsed = 0;
 	}
 	
+	@Override
 	protected void fillReportDetails(Map<String, String> out) {
 		super.fillReportDetails(out);
 		out.put("type", type);
 	}
 
+	/**
+	 * 
+	 * IncomingRoad for MostCrowed
+	 *
+	 */
 	protected class IncomingRoad extends Junction.IncomingRoad {
 
 		protected int timeInterval;
 		protected int timeUnitsUsed;
 
+		/**
+		 * Class constructor
+		 * 
+		 * @param r name of the road
+		 */
 		public IncomingRoad(String r) {
 			super(r);
 			this.timeInterval = 0;
 			this.timeUnitsUsed = 0;
 		}
 
-		protected String semaforoReport() {
-			StringBuilder r = new StringBuilder();
-			r.append(super.semaforoReport());
-			if (semaforoVerde) {
-				r.append(":" + (timeInterval - timeUnitsUsed));
+		@Override
+		protected String trafficLightsReport() {
+			String s = super.trafficLightsReport();
+			if (trafficLightsGreen) {
+				s += ":" + (timeInterval - timeUnitsUsed);
 			}
-			return r.toString();
+			return s;
 		}
 	}
 }

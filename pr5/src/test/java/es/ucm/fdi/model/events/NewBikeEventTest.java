@@ -71,7 +71,7 @@ public class NewBikeEventTest {
 			Event e = r.parse(test);
 			RoadMap s = new RoadMap();
 			Junction J1=new Junction("j1");
-			J1.newOutgoing(new Road("r1",10,5,J1,new Junction("j2")));
+			J1.addOutgoing(new Road("r1",10,5,J1,new Junction("j2")));
 			s.addJunction(J1);
 			s.addJunction(new Junction("j2"));
 			s.addJunction(new Junction("j3"));

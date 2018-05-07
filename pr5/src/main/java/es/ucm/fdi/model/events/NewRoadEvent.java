@@ -44,7 +44,7 @@ public class NewRoadEvent extends Event {
 		}
 
 		Road r = new Road(id, length, maxSpeed, a, b);
-		a.newOutgoing(r);
+		a.addOutgoing(r);
 		b.newIncoming(r);
 		things.addRoad(r);
 	}

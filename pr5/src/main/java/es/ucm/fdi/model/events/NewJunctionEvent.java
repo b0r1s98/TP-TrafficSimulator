@@ -41,11 +41,9 @@ public class NewJunctionEvent extends Event {
 				String id = checkId(map);
 
 				return new NewJunctionEvent(time, id);
-			} catch (IllegalArgumentException e) {
-				throw e;
 			} catch (Exception e) {
 				throw new IllegalArgumentException(
-						"Incorrect arguments for new_junction");
+						"Incorrect arguments for new_junction", e);
 			}
 		}
 	}

@@ -4,6 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+/**
+ * 
+ * A SimObject called Car.
+ *
+ */
 public class Car extends Vehicle {
 
 	protected String type;
@@ -13,6 +18,18 @@ public class Car extends Vehicle {
 	protected int maxFaultDuration;
 	protected Random numRand;
 
+	/**
+	 * Class constructor
+	 * 
+	 * @param speedMax			maximum speed
+	 * @param itinerary			array of the junctions the vehicle must pass through
+	 * @param id				name of the vehicle
+	 * @param type				string containing "car"
+	 * @param resistanceKm		minimum km without being faulty
+	 * @param faultProbability	probability of getting faulty
+	 * @param maxFaultDuration	maximum ticks it can be faulty
+	 * @param seed				seed used to calculate probability
+	 */
 	public Car(int speedMax, List<Junction> itinerary, String id, String type,
 			int resistanceKm, double faultProbability, int maxFaultDuration,
 			long seed) {
@@ -25,6 +42,7 @@ public class Car extends Vehicle {
 		this.numRand = new Random(seed);
 	}
 
+	@Override
 	public void advance() {
 		if (faultyTime == 0 && kmSinceFault > resistanceKm
 				&& numRand.nextDouble() < faultProbability) {
@@ -50,6 +68,7 @@ public class Car extends Vehicle {
 		}
 	}
 
+	@Override
 	public void fillReportDetails(Map<String, String> out) {
 		out.put("type", type);
 		super.fillReportDetails(out);

@@ -29,7 +29,7 @@ public class MostCrowedTest {
 		Road r3 = new Road("r3", 20, 20, j0, itinerary.get(1));
 		itinerary.get(1).newIncoming(r3);
 		itinerary.get(1).newIncoming(r1);
-		itinerary.get(1).newOutgoing(r2);
+		itinerary.get(1).addOutgoing(r2);
 		itinerary.get(2).newIncoming(r2);
 		c.moveToNextRoad(r3);
 		c1.moveToNextRoad(r3);

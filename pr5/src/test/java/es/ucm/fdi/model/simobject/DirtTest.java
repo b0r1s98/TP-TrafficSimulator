@@ -22,7 +22,7 @@ public class DirtTest {
 		Dirt r2 = new Dirt("r2", 15, 20, itinerary.get(1), itinerary.get(2),
 				"Dirt");
 		itinerary.get(1).newIncoming(r1);
-		itinerary.get(1).newOutgoing(r2);
+		itinerary.get(1).addOutgoing(r2);
 		itinerary.get(2).newIncoming(r2);
 		v.moveToNextRoad(r1);
 		v1.moveToNextRoad(r1);

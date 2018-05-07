@@ -37,7 +37,7 @@ public class NewVehicleEvent extends Event {
 		for (String s : junctions) {
 			Junction step = things.getJunction(s);
 			if (step == null) {
-				throw new SimulatorException("A vehicle goes over ghost junctions");
+				throw new SimulatorException("Junction doesn't exist");
 			}
 			it.add(step);
 		}

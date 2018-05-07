@@ -40,7 +40,7 @@ public class NewHighwayEvent extends NewRoadEvent {
 		Road r = new Highway(id, length, maxSpeed, a, b, "lanes", lanes);
 		// Esto vuelve a ser comun
 
-		a.newOutgoing(r);
+		a.addOutgoing(r);
 		b.newIncoming(r);
 		things.addRoad(r);
 	}

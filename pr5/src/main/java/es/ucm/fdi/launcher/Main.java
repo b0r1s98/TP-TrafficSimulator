@@ -9,6 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import javax.swing.SwingUtilities;
 
@@ -21,11 +27,17 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import es.ucm.fdi.control.Controller;
-import es.ucm.fdi.view.SimWindow;
+import es.ucm.fdi.control.TrafficSimulator;
+import es.ucm.fdi.control.TrafficSimulator.UpdateEvent;
 import es.ucm.fdi.ini.Ini;
 import es.ucm.fdi.ini.IniError;
-import es.ucm.fdi.model.exceptions.SimulatorException;
+import es.ucm.fdi.view.SimWindow;
 
+/**
+ * 
+ * Parses initial arguments and starts correct mode.
+ *
+ */
 public class Main {
 
 	private final static Integer _timeLimitDefaultValue = 10;
@@ -33,6 +45,35 @@ public class Main {
 	private static String _inFile = null;
 	private static String _outFile = null;
 	private static String _mode = null;
+	
+	private static final Logger logger =
+			Logger.getLogger(Main.class.getName());
+	
+	/**
+	 * Redirects logger to a file and sets its level to level
+	 * @param level	the level to be set to log
+	 */
+	public static void setupLogging(Level level) {
+		Logger log = Logger.getLogger("");
+		for (Handler h : log.getHandlers()) {
+			log.removeHandler( h );
+		}
+		FileHandler ch;
+		try {
+			ch = new FileHandler("log.txt");
+			ch.setFormatter(new SimpleFormatter() {
+				@Override
+				public synchronized String format(LogRecord record) {
+					return record.getMessage() + "\n";
+				}
+			});
+			log.addHandler(ch);
+			log.setLevel(level);
+			ch.setLevel(level);
+		} catch (SecurityException | IOException e) {
+			log.setLevel(Level.OFF);
+		}
+	}
 
 	private static void parseArgs(String[] args) {
 
@@ -134,6 +175,7 @@ public class Main {
 	 * @throws IOException
 	 */
 	public static void test(String path) throws IOException {
+		setupLogging(Level.OFF);
 
 		File dir = new File(path);
 
@@ -166,8 +208,6 @@ public class Main {
 
 	/**
 	 * Run the simulator in batch mode
-	 * 
-	 * @throws IOException
 	 */
 	private static void startBatchMode() {
 		try {
@@ -176,7 +216,9 @@ public class Main {
 				try {
 					out = new FileOutputStream(_outFile);
 				} catch (FileNotFoundException e) {
-					System.out.println("Output file doesn't exist, reports will be redirected to console.");
+					String s = "Output file doesn't exist, reports will be redirected to console.";
+					System.err.println(s);
+					logger.info(s);
 				}
 			}
 			
@@ -184,6 +226,21 @@ public class Main {
 				_timeLimit = _timeLimitDefaultValue;
 			}
 			Controller control = new Controller();
+			control.getSimulator().addSimulatorListener( new TrafficSimulator.SimulatorListener() {
+				
+				@Override
+				public void update(UpdateEvent ue, String error) {
+					switch(ue.getEvent()){
+					case ERROR:
+						System.err.print("Simulation error: ");
+						System.err.println(error);
+						break;
+					default:
+						break;
+					}
+				}
+			});
+			
 			InputStream in;
 			try {
 				in = new FileInputStream(_inFile);
@@ -194,28 +251,36 @@ public class Main {
 			try {
 				control.loadEvents(in);
 			} catch (IOException | IniError | IllegalArgumentException e) {
-				throw new Exception("Incorrect event", e);
+				throw new Exception("Error loading events from file "+_inFile, e);
 			}
 			
 			try {
 				control.getSimulator().run(_timeLimit, out);
-			} catch (IOException | SimulatorException e) {
-				throw new Exception("Error simulating", e);
+			} catch (IOException e) {
+				throw new Exception("Error reporting", e);
 			}
 			
-			
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			System.err.println(e.getMessage());
+			logger.log(Level.SEVERE, "Fatal error", e);
 		}
+		
+		logger.info("Exiting...");
 	}
 	
+	/**
+	 * Runs the simulator in GUI mode
+	 */
 	private static void startGUIMode() {
 		Controller control = new Controller();
-		SwingUtilities.invokeLater(() -> new SimWindow(control, _inFile, _timeLimit));
+		File input = (_inFile != null) ? new File(_inFile) : null;
+		logger.info("Launching GUI");
+		SwingUtilities.invokeLater(() -> new SimWindow(control, input, _timeLimit));
 	}
 
-	private static void start(String[] args) throws IOException {
+	private static void start(String[] args) {
 		parseArgs(args);
+		setupLogging(Level.INFO);
 		if("gui".equals(_mode)) {
 			startGUIMode();
 		}
@@ -224,7 +289,7 @@ public class Main {
 		}
 	}
 
-	public static void main(String[] args) throws IOException, InvocationTargetException, InterruptedException {
+	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
 
 		// example command lines:
 		//

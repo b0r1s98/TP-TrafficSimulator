@@ -32,7 +32,7 @@ public class RoundRobinTest {
 		Road r3 = new Road("r3", 20, 80, j3, j1);
 		j1.newIncoming(r3);
 		j1.newIncoming(r1);
-		j1.newOutgoing(r2);
+		j1.addOutgoing(r2);
 		j2.newIncoming(r2);
 		c.moveToNextRoad(r3);
 		c1.moveToNextRoad(r3);

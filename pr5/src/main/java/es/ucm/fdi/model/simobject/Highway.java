@@ -4,11 +4,27 @@ import java.util.Map;
 
 import es.ucm.fdi.util.MultiTreeMap;
 
+/**
+ * 
+ * A SimObject called Highway.
+ *
+ */
 public class Highway extends Road {
 	
 	protected String type;
 	protected int numLanes;
 	
+	/**
+	 * Class constructor
+	 * 
+	 * @param id		name of this road
+	 * @param length	length of this road
+	 * @param maxVel	maximum speed allowed to vehicles in this road
+	 * @param start		the junction at the beginning
+	 * @param end		the junction at the end
+	 * @param type		string containing "lanes"
+	 * @param numLanes	number of lanes in this road
+	 */
 	public Highway(String id, int length, int maxVel, Junction start,
 			Junction end, String type, int numLanes) {
 		super(id, length, maxVel, start, end);
@@ -16,6 +32,7 @@ public class Highway extends Road {
 		this.numLanes = numLanes;
 	}
 
+	@Override
 	public int calculateSpeedBase() {
 		long n = vehicles.sizeOfValues();
 		n = (n<1) ? 1 : n;
@@ -26,6 +43,7 @@ public class Highway extends Road {
 		return value;
 	}
 	
+	@Override
 	public void advance() {
 		MultiTreeMap<Integer, Vehicle> newVehicles = new MultiTreeMap<>((a, b) -> b-a);
 		int baseSpeed = calculateSpeedBase();
@@ -51,6 +69,7 @@ public class Highway extends Road {
 		vehicles = newVehicles;
 	}
 	
+	@Override
 	public void fillReportDetails(Map<String, String> out) {
 		out.put("type", type);
 		super.fillReportDetails(out);

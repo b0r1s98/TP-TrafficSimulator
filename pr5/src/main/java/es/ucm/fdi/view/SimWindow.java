@@ -14,12 +14,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.Action;
 import javax.swing.BorderFactory;
-import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -32,13 +35,12 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.Border;
-import javax.swing.table.AbstractTableModel;
 
 import es.ucm.fdi.control.Controller;
 import es.ucm.fdi.control.RoadMap;
@@ -46,32 +48,47 @@ import es.ucm.fdi.control.SimulatorAction;
 import es.ucm.fdi.control.TrafficSimulator.SimulatorListener;
 import es.ucm.fdi.control.TrafficSimulator.UpdateEvent;
 import es.ucm.fdi.ini.IniError;
-import es.ucm.fdi.model.Describable;
 import es.ucm.fdi.model.events.Event;
 
 @SuppressWarnings("serial")
+/**
+ * 
+ * Principal GUI window
+ *
+ */
 public class SimWindow extends JPanel implements SimulatorListener{
 
 	private JFileChooser fc;
 	private JTextField time;
 	private JSpinner cicles;
-	private JCheckBox redirect;
+	private JCheckBoxMenuItem redirect;
 	private OutputStream outText;
+	private OutputStream outNull;
+	private Templates templates;
 	
 	private JPopupMenu botonDer;
 	private JTextArea eventsEditor;
-	private JTable eventsQueue;
+	private SimTable eventsTable;
 	private JTextArea reports;
-	private JTable vehiclesTable;
-	private JTable roadsTable;
-	private JTable junctionsTable;
+	private SimTable vehiclesTable;
+	private SimTable roadsTable;
+	private SimTable junctionsTable;
 	private GraphLayout graphRoadMap;
 	private JLabel statusBar;
 	
 	private Controller controller;
 	
-
-	public SimWindow(Controller controller, String file, Integer ticks) {
+	private static final Logger logger =
+			Logger.getLogger(SimWindow.class.getName());
+	
+	/**
+	 * Class constructor
+	 * 
+	 * @param controller	Controller that communicates with the TrafficSimulator
+	 * @param file			initial file to take events from
+	 * @param ticks			initial ticks to run simulator
+	 */
+	public SimWindow(Controller controller, File file, Integer ticks) {
 		super();
 		this.controller = controller;
 		
@@ -79,14 +96,18 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		controller.getSimulator().addSimulatorListener(this);
 		
 		if(file != null) {
-			loadFromString(file);
+			loadFromFile(file);
 		}
 		if(ticks != null) {
 			setTime(ticks);
 		}
 	}
 
+	/**
+	 * Initiates GUI
+	 */
 	private void initGUI() {
+		logger.info("Initializing GUI");
 		JFrame jframe = new JFrame("Traffic Simulator");
 		this.setLayout(new BorderLayout());
 		jframe.setContentPane(this);
@@ -110,6 +131,7 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		this.add(topSplit, BorderLayout.CENTER);
 		
 		outText = new OutputStreamGUI(reports);
+		outNull = new OutputStreamNull();
 		
 		statusBar = new JLabel("Ready!");
 		statusBar.setBorder(BorderFactory.createLoweredBevelBorder());
@@ -122,97 +144,53 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		bottomSplit.setDividerLocation(.5);
 	}
 	
+	/**
+	 * Inserts current roadMap and events to tables
+	 * 
+	 * @param events	current events in simulator
+	 * @param roadmap	current roadMap in simulator
+	 */
 	private void connectTables(List<Event> events, RoadMap roadmap) {
+		logger.info("Connecting tables");
 		String[] eFields = { "#", "Time", "Type"};
-		ListOfMapsTableModel eModel = new ListOfMapsTableModel(eFields, events);
-		eventsQueue.setModel(eModel);
+		eventsTable.setModel(eFields, events);
 		
 		String[] vFields = {"ID", "Road", "Location", "Speed", "Km",
 				"Faulty Units", "Itinerary" };
-		ListOfMapsTableModel vModel = new ListOfMapsTableModel(vFields, roadmap.getVehicles());
-		vehiclesTable.setModel(vModel);
+		vehiclesTable.setModel(vFields, roadmap.getVehicles());
 		
 		String[] rFields = { "ID", "Source", "Target", "Length", "Max Speed",
 				"Vehicles" };
-		ListOfMapsTableModel rModel = new ListOfMapsTableModel(rFields, roadmap.getRoads());
-		roadsTable.setModel(rModel);
+		roadsTable.setModel(rFields, roadmap.getRoads());
 		
 		String[] jFields = { "ID", "Green", "Red"};
-		ListOfMapsTableModel jModel = new ListOfMapsTableModel(jFields, roadmap.getJunctions());
-		junctionsTable.setModel(jModel);
-	}
-	
-	private class ListOfMapsTableModel extends AbstractTableModel {
-		private String[] fieldNames;
-		private List<? extends Describable> elements;
-		
-		private HashMap<String, String> map;
-		private int previousRow;
-		
-		public ListOfMapsTableModel(String[] fieldNames,
-				List<? extends Describable> elements) {
-			this.fieldNames = fieldNames;
-			this.elements = elements;
-			this.map = new HashMap<String, String>();
-			this.previousRow = -1;
-		}
-
-		@Override
-		public String getColumnName(int columnIndex) {
-			return fieldNames[columnIndex];
-		}
-
-		@Override
-		public int getRowCount() {
-			return elements.size();
-		}
-
-		@Override
-		public int getColumnCount() {
-			return fieldNames.length;
-		}
-
-		@Override
-		public Object getValueAt(int rowIndex, int columnIndex) {
-			if(rowIndex != previousRow) {
-				elements.get(rowIndex).describe(map);
-				map.put("#", ""+rowIndex);
-				previousRow = rowIndex;
-			}
-			return map.get(fieldNames[columnIndex]);
-		}
-		
-		public List<? extends Describable> getElements() {
-			return null; //HACER
-		}
+		junctionsTable.setModel(jFields, roadmap.getJunctions());
 	}
 
+	/** 
+	 * @return jpanel containing down left tables
+	 */
 	private JPanel createDownLeft() {
+		logger.info("Creating Down Left Panel");
 		JPanel panel = new JPanel(new GridLayout(3,1));
-		Border b = BorderFactory.createLineBorder(Color.black, 2);
 		
-		vehiclesTable = new JTable();
-		JPanel vPanel = new JPanel(new BorderLayout());
-		vPanel.setBorder(BorderFactory.createTitledBorder(b, "Vehicles"));
-		vPanel.add(new JScrollPane(vehiclesTable));
-		panel.add(vPanel);
+		vehiclesTable = new SimTable();
+		panel.add(vehiclesTable.intoPanel("Vehicles"));
 		
-		roadsTable = new JTable();
-		JPanel rPanel = new JPanel(new BorderLayout());
-		rPanel.setBorder(BorderFactory.createTitledBorder(b, "Roads"));
-		rPanel.add(new JScrollPane(roadsTable));
-		panel.add(rPanel);
+		roadsTable = new SimTable();
+		panel.add(roadsTable.intoPanel("Roads"));
 		
-		junctionsTable = new JTable();
-		JPanel jPanel = new JPanel(new BorderLayout());
-		jPanel.setBorder(BorderFactory.createTitledBorder(b, "Junctions"));
-		jPanel.add(new JScrollPane(junctionsTable));
-		panel.add(jPanel);
+		junctionsTable = new SimTable();
+		panel.add(junctionsTable.intoPanel("Junctions"));
 		
 		return panel;
 	}
 
+	/**
+	 * @return jpanel containing up part of the GUI
+	 */
 	private JPanel createUp() {
+		logger.info("Creating Up Panel");
 		JPanel panel = new JPanel(new GridLayout(1,3));
 		Border b = BorderFactory.createLineBorder(Color.black, 2);
 		
@@ -255,11 +233,8 @@ public class SimWindow extends JPanel implements SimulatorListener{
 			}
 		});
 		
-		eventsQueue = new JTable();
-		JPanel panelMed = new JPanel(new BorderLayout());
-		panelMed.setBorder(BorderFactory.createTitledBorder(b, "Events Queue"));
-		panelMed.add(new JScrollPane(eventsQueue));
-		panel.add(panelMed);
+		eventsTable = new SimTable();
+		panel.add(eventsTable.intoPanel("Events Queue"));
 
 		reports = new JTextArea();
 		reports.setEditable(false);
@@ -273,6 +248,11 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		return panel;
 	}
 	
+	/**
+	 * 
+	 * Enum with the names of all the actions
+	 *
+	 */
 	enum Command {
 		LoadEvents("Load Events"), SaveEvents("Save Events"), ClearEvents("Clear Events"),
 		InsertEvents("Insert events"), Run("Run"), Reset("Reset"),
@@ -290,64 +270,87 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		}
 	}
 	
+	/**
+	 * Creates actions
+	 */
 	private void createActions(){
+		logger.info("Creating actions");
 
-		SimulatorAction loadEvents = new SimulatorAction(Command.LoadEvents, "open.png",
-				"Cargar un fichero de eventos", KeyEvent.VK_L, "ctrl L",
-				() -> loadFile());
+		SimulatorAction loadEvents = new SimulatorAction(Command.LoadEvents,
+				"open.png", "Cargar un fichero de eventos", KeyEvent.VK_L,
+				"ctrl L", () -> loadFile());
 		loadEvents.register(this);
 
-		SimulatorAction saveEvents = new SimulatorAction(Command.SaveEvents, "save.png",
-				"Guardar un fichero de eventos", KeyEvent.VK_A, "ctrl S",
-				() -> saveFile(eventsEditor));
+		SimulatorAction saveEvents = new SimulatorAction(Command.SaveEvents,
+				"save.png", "Guardar un fichero de eventos", KeyEvent.VK_A,
+				"ctrl S", () -> saveFile(eventsEditor));
 		saveEvents.register(this);
 
 		SimulatorAction cleanEvents = new SimulatorAction(Command.ClearEvents,
-				"clear.png", "Limpiar la zona de eventos", KeyEvent.VK_N, "ctrl N",
-				() -> eventsEditor.setText(""));
+				"clear.png", "Limpiar la zona de eventos", KeyEvent.VK_E,
+				"alt E", () -> {
+					eventsEditor.setText("");
+					logger.info("Events cleaned");
+				});
 		cleanEvents.register(this);
 		
 		SimulatorAction insertEvents = new SimulatorAction(Command.InsertEvents,
-				"events.png", "Insertar eventos en el simulador", KeyEvent.VK_E,
-				"ctrl E", () -> addEvents());
+				"events.png", "Insertar eventos en el simulador", KeyEvent.VK_I,
+				"alt I", () -> addEvents());
 		insertEvents.register(this);
 		
 		SimulatorAction play = new SimulatorAction(Command.Run,
 				"play.png", "Ejecutar el simulador", KeyEvent.VK_U,
-				"control p", () -> runSimulator());
+				"ctrl P", () -> runSimulator());
 		play.register(this);
 		
 		SimulatorAction reset = new SimulatorAction(Command.Reset,
 				"reset.png", "Reiniciar el simulador", KeyEvent.VK_T,
-				"control t", () -> resetSimulator());
+				"ctrl T", () -> controller.getSimulator().reset());
 		reset.register(this);
 		
 		SimulatorAction generateReports = new SimulatorAction(Command.GenerateReports,
 				"report.png", "Generar informes", KeyEvent.VK_G,
-				"control k", () -> generateReports());
+				"ctrl K", () -> generateReports());
 		generateReports.register(this);
 		
 		SimulatorAction cleanReports = new SimulatorAction(Command.ClearReports,
 				"delete_report.png", "Limpiar el área de informes", KeyEvent.VK_C,
-				"control u", () -> reports.setText(""));
+				"ctrl U", () -> {
+					reports.setText("");
+					logger.info("Reports cleaned");
+				});
 		cleanReports.register(this);
 		
 		SimulatorAction saveReports = new SimulatorAction(Command.SaveReport,
 				"save_report.png", "Guardar los informes", KeyEvent.VK_V,
-				"control r", () -> saveFile(reports));
+				"ctrl R", () -> saveFile(reports));
 		saveReports.register(this);
 
-		SimulatorAction quit = new SimulatorAction(Command.Exit, "exit.png",
-				"Salir de la aplicación", KeyEvent.VK_E, "control shift X",
-				() -> System.exit(0));
+		SimulatorAction quit = new SimulatorAction(Command.Exit,
+				"exit.png", "Salir de la aplicación", KeyEvent.VK_X,
+				"control shift X", () -> {
+					logger.info("Exiting...");
+					System.exit(0);
+				});
 		quit.register(this);
 	}
-	
+
+	/**
+	 * Shortcut for getting an action from the ActionMap
+	 * 
+	 * @param c enum value of the action
+	 * @return	corresponding action
+	 */
 	private Action getAction(Command c){
 		return getActionMap().get(c.toString());
 	}
 	
+	/**
+	 * @return menu bar
+	 */
 	private JMenuBar createMenuBar() {
+		logger.info("Creating Menu Bar");
 		JMenuBar menuBar = new JMenuBar();
 
 		JMenu file = new JMenu("File");
@@ -367,8 +370,10 @@ public class SimWindow extends JPanel implements SimulatorListener{
 
 		simulator.add(getAction(Command.Run));
 		simulator.add(getAction(Command.Reset));
-		redirect = new JCheckBox("Redirect Output");
+		redirect = new JCheckBoxMenuItem("Redirect Output");
 		redirect.setSelected(true);
+		redirect.setMnemonic(KeyEvent.VK_O);
+		redirect.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
 		simulator.add(redirect);
 		
 		JMenu reports = new JMenu("Reports");
@@ -381,7 +386,11 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		return menuBar;
 	}
 	
+	/**
+	 * @return tool bar
+	 */
 	private JToolBar createJToolBar() {
+		logger.info("Creating Tool Bar");
 		JToolBar toolBar = new JToolBar();
 
 		toolBar.add(getAction(Command.LoadEvents));
@@ -420,6 +429,11 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		return toolBar;
 	}
 
+	/**
+	 * Shows dialog and save text from JTextArea
+	 * 
+	 * @param area the JTextArea
+	 */
 	private void saveFile(JTextArea area) {
 		int returnVal = fc.showSaveDialog(null);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -428,6 +442,9 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		}
 	}
 
+	/**
+	 * Shows dialog and loads file to JTextArea eventsEditor
+	 */
 	private void loadFile() {
 		int returnVal = fc.showOpenDialog(null);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -436,36 +453,73 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		}
 	}
 
+	/**
+	 * Loads File
+	 * 
+	 * @param file	file to be loaded
+	 * @return		string containing file's text
+	 */
 	private static String readFile(File file) {
 		String s = "";
 		try {
 			s = new String(Files.readAllBytes(file.toPath()), "UTF-8");
+			logger.info("File loaded");
 		} catch (IOException e) {
-			createAlert("File couldn't be loaded.");
+			String msg = "File couldn't be loaded.";
+			createAlert(msg);
+			logger.log(Level.WARNING, msg, e);
 		}
 		return s;
 	}
 
+	/**
+	 * Saves content to file.toPath()
+	 * 
+	 * @param file		gives file where to save content
+	 * @param content	string to be saved
+	 */
 	private static void writeFile(File file, String content) {
 		try {
 			Files.write(file.toPath(), content.getBytes("UTF-8"));
+			logger.info("File saved");
 		} catch (IOException e) {
-			createAlert("File couldn't be saved.");
+			String msg = "File couldn't be saved.";
+			createAlert(msg);
+			logger.log(Level.WARNING, msg, e);
 		}
 	}
 	
-	private void loadFromString(String fileName) {
-		File file = new File(fileName);
+	/**
+	 * Loads text from file and writes it in eventsEditor
+	 * 
+	 * @param file	file loaded
+	 */
+	private void loadFromFile(File file) {
 		eventsEditor.setText(readFile(file));
 	}
 	
+	/**
+	 * Sets time in JSpinner to ticks
+	 * 
+	 * @param ticks
+	 */
 	private void setTime(int ticks) {
 		((SpinnerNumberModel) cicles.getModel()).setValue(ticks);
 	}
 	
+	/**
+	 * 
+	 * OutputStream that writes into JTextArea
+	 *
+	 */
 	private class OutputStreamGUI extends OutputStream{
 		private JTextArea area;
 		
+		/**
+		 * Class constructor
+		 * 
+		 * @param area	JTextArea where it'll write
+		 */
 		public OutputStreamGUI(JTextArea area) {
 			super();
 			this.area = area;
@@ -478,7 +532,25 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		}
 	}
 	
+	/**
+	 * 
+	 * OutputStream that writes nowhere
+	 *
+	 */
+	private class OutputStreamNull extends OutputStream{
+
+		@Override
+		public void write(int arg0) throws IOException {
+			
+		}
+		
+	}
+	
+	/**
+	 * Initiates right-click menu
+	 */
 	private void initiatePopUpMenu() {
+		logger.info("Initializing right-click menu");
 		botonDer = new JPopupMenu();
 		JMenu addTemplate = new JMenu("Add Template");
 		
@@ -505,117 +577,97 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		botonDer.add(getAction(Command.ClearEvents));
 	}
 	
-	private static String showTemplate(String s) {
-		StringBuilder t = new StringBuilder();
-		switch(s) {
-		case "New RR Junction":
-			t.append(showTemplate("New Junction"));
-			t.append("max_time_slice = \n");
-			t.append("min_time_slice = \n");
-			t.append("type = rr\n");
-			break;
-		case "New MC Junction":
-			t.append(showTemplate("New Junction"));
-			t.append("type = mc\n");
-			break;
-		case "New Junction":
-			t.append("[new_junction]\n");
-			t.append("time = \n");
-			t.append("id = \n");
-			break;
-		case "New Dirt Road":
-			t.append(showTemplate("New Road"));
-			t.append("type = dirt\n");
-			break;
-		case "New Lanes Road":
-			t.append(showTemplate("New Road"));
-			t.append("lanes = \n");
-			t.append("type = lanes\n");
-			break;
-		case "New Road":
-			t.append("[new_road]\n");
-			t.append("time = \n");
-			t.append("id = \n");
-			t.append("src = \n");
-			t.append("dest = \n");
-			t.append("max_speed = \n");
-			t.append("length = \n");
-			break;
-		case "New Bike":
-			t.append(showTemplate("New Vehicle"));
-			t.append("type = bike\n");
-			break;
-		case "New Car":
-			t.append(showTemplate("New Vehicle"));
-			t.append("resistance = \n");
-			t.append("fault_probability = \n");
-			t.append("max_fault_duration = \n");
-			t.append("seed = \n");
-			t.append("type = car\n");
-			break;
-		case "New Vehicle":
-			t.append("[new_vehicle]\n");
-			t.append("time = \n");
-			t.append("id = \n");
-			t.append("itinerary = \n");
-			t.append("max_speed = \n");
-			break;
-		case "Make Vehicle Faulty":
-			t.append("[make_vehicle_faulty]\n");
-			t.append("time = \n");
-			t.append("vehicles = \n");
-			t.append("duration = \n");
-			break;
-		}
-		return t.toString();
-	}
-	
-	private void generateReports() {
-		OutputStream out = redirect.isSelected() ? outText : new OutputStreamGUI(new JTextArea());
+	/**
+	 * @param s
+	 * @return 	string containing template with name s
+	 * 			(but with '_' instead of ' ')
+	 */
+	private String showTemplate(String s) {
+		String name = String.join("_", s.split(" "));
 		
-		generateReportTable(vehiclesTable, out);
-		generateReportTable(roadsTable, out);
-		generateReportTable(junctionsTable, out);
+		if(templates == null) {
+			try {
+				templates = new Templates();
+			} catch (IOException e) {
+				String msg = "Error loading templates";
+				logger.log(Level.WARNING, msg, e);
+				createAlert(msg);
+			}
+		}
+		return templates.getTemplate(name);
 	}
 	
-	private void generateReportTable(JTable t, OutputStream out){
-		//HACER
-	}
-	
+	/**
+	 * Creates an alert message with message
+	 * 
+	 * @param message string to be shown on the alert
+	 */
 	private static void createAlert(String message) {
-		JFrame frame = new JFrame();
-		JOptionPane.showMessageDialog(frame, message, "Warning", JOptionPane.WARNING_MESSAGE);
+		JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
 	}
 	
+	/**
+	 * Generates reports of selected ids on tables
+	 */
+	private void generateReports() {
+		logger.info("Getting selected ids on tables");
+		Set<String> ids = new HashSet<>();
+		ids.addAll(junctionsTable.getSelectedIds());
+		ids.addAll(roadsTable.getSelectedIds());
+		ids.addAll(vehiclesTable.getSelectedIds());
+		OutputStream out = redirect.isSelected() ? outText : outNull;
+		try {
+			reports.setText("");
+			controller.getSimulator().generateReport(out, ids);
+		} catch (IOException e) {
+			String msg = "Couldn't create reports";
+			logger.log(Level.WARNING, msg, e);
+			createAlert(msg);
+		}
+	}
+	
+	/**
+	 * Adds events to simulator from eventsEditor
+	 */
 	private void addEvents(){
 		controller.getSimulator().removeEvents();
-		resetSimulator();
+		controller.getSimulator().reset();
 		try {
 			controller.loadEvents(new ByteArrayInputStream(eventsEditor.getText().getBytes()));
 		} catch (IOException | IniError | IllegalArgumentException e) {
+			String msg = "Incorrect event";
+			logger.log(Level.WARNING, msg, e);
 			createAlert("Incorrect event\n"+e.getMessage());
-			statusBar.setText("Incorrect event");
+			statusBar.setText(msg);
 		}
 		getAction(Command.Run).setEnabled(true);
 		getAction(Command.Reset).setEnabled(true);
 	}
 	
+	/**
+	 * Runs simulator with the corresponding ticks and outputstream
+	 */
 	private void runSimulator(){
 		int ticks = ((SpinnerNumberModel) cicles.getModel()).getNumber().intValue();
-		OutputStream out = redirect.isSelected() ? outText : new OutputStreamGUI(new JTextArea());
+		OutputStream out = redirect.isSelected() ? outText : outNull;
 		try {
 			controller.getSimulator().run(ticks, out);
 		} catch (IOException e) {
-			createAlert("Error generating report");
+			String msg = "Error generating report";
+			logger.log(Level.WARNING, msg + " (should not happen)", e);
+			createAlert(msg);
 		}
 	}
 	
-	private void resetSimulator(){
-		controller.getSimulator().reset();
-	}
-	
-	private void updateTable(JTable table) {
-		((ListOfMapsTableModel) table.getModel()).fireTableDataChanged();
+	/**
+	 * Repaints tables to show updated information
+	 */
+	private void updateTables() {
+		logger.info("Updating tables");
+		vehiclesTable.update();
+		roadsTable.update();
+		junctionsTable.update();
+		eventsTable.update();
 	}
 	
 	@Override
@@ -628,23 +680,19 @@ public class SimWindow extends JPanel implements SimulatorListener{
 			time.setText("0");
 			reports.setText("");
 			connectTables(ue.getEvenQueue(),ue.getRoadMap());
-			updateTable(vehiclesTable);
-			updateTable(roadsTable);
-			updateTable(junctionsTable);
+			updateTables();
 			graphRoadMap.generateGraph(ue.getRoadMap());
 			statusBar.setText("Simulator has been reseted");
 			getAction(Command.Run).setEnabled(true);
 			break;
 		case NEW_EVENT:
-			updateTable(eventsQueue);
+			updateTables();
 			statusBar.setText("Events have been loaded to the simulator");
 			break;
 		case ADVANCED:
 			time.setText(""+ (Integer.parseInt(time.getText()) + 1));
 			connectTables(ue.getEvenQueue(),ue.getRoadMap());
-			updateTable(vehiclesTable);
-			updateTable(roadsTable);
-			updateTable(junctionsTable);
+			updateTables();
 			graphRoadMap.generateGraph(ue.getRoadMap());
 			statusBar.setText("Simulator has advanced in time!");
 			break;

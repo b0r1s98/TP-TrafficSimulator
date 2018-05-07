@@ -53,11 +53,9 @@ public class NewRoundRobinEvent extends NewJunctionEvent {
 				}
 
 				return new NewRoundRobinEvent(time, id, minTime, maxTime);
-			} catch (IllegalArgumentException e) {
-				throw e;
 			} catch (Exception e) {
 				throw new IllegalArgumentException(
-						"Incorrect arguments for new_junction");
+						"Incorrect arguments for new_junction", e);
 			}
 		}
 	}

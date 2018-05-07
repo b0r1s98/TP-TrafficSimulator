@@ -17,7 +17,7 @@ public class RoadTest {
 		Road r1 = new Road("r1", 30, 10, itinerary.get(0), itinerary.get(1));
 		Road r2 = new Road("r2", 15, 20, itinerary.get(1), itinerary.get(2));
 		itinerary.get(1).newIncoming(r1);
-		itinerary.get(1).newOutgoing(r2);
+		itinerary.get(1).addOutgoing(r2);
 		v1.moveToNextRoad(r1);
 		r1.advance();
 		assertTrue("Los vehiculos no van a velocidad adecuada",

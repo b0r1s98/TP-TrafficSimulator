@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import es.ucm.fdi.ini.Ini;
 import es.ucm.fdi.ini.IniSection;
@@ -19,6 +20,11 @@ import es.ucm.fdi.model.events.NewRoadEvent;
 import es.ucm.fdi.model.events.NewRoundRobinEvent;
 import es.ucm.fdi.model.events.NewVehicleEvent;
 
+/**
+ * 
+ * Manage loading events into simulator.
+ *
+ */
 public class Controller {
 	private static Event.Builder[] avaliableEvents = {
 			new NewVehicleEvent.Builder(), new NewCarEvent.Builder(),
@@ -29,28 +35,25 @@ public class Controller {
 			new MakeVehicleFaultyEvent.Builder() };
 
 	private TrafficSimulator simulation;
-	/*
-	private InputStream in;
-	private OutputStream out;
-	private int ticks;
-
-	public Controller(InputStream in, OutputStream out, int ticks) {
-		this();
-		this.in = in;
-		this.out = out;
-		this.ticks = ticks;
-	}
-	*/
+	
+	private static final Logger logger =
+			Logger.getLogger(Controller.class.getName());
+	/**
+	 * Class constructor
+	 */
 	public Controller() {
 		this.simulation = new TrafficSimulator();
 	}
-	/*
-	public void run() throws IOException {
-		loadEvents(in);
-		simulation.run(ticks, out);
-	}
-	*/
+	
+	/**
+	 * 
+	 * Loads all the events in a inputstream into the simulator.
+	 * 
+	 * @param input			the stream with the events to be loaded
+	 * @throws IOException  if an input exception occurred
+	 */
 	public void loadEvents(InputStream input) throws IOException {
+		logger.info("Loading events");
 		Ini init = new Ini(input);
 		List<IniSection> list = init.getSections();
 
@@ -67,11 +70,14 @@ public class Controller {
 
 			if (!found) {
 				throw new IllegalArgumentException(
-						"Not sure about what is this: " + i.getTag());
+						"Unknown event: " + i.getTag());
 			}
 		}
 	}
-
+	
+	/**
+	 * @return the current simulator
+	 */
 	public TrafficSimulator getSimulator() {
 		return simulation;
 	}
