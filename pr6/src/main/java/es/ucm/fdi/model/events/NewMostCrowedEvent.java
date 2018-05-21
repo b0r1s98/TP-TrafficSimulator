@@ -20,7 +20,8 @@ public class NewMostCrowedEvent extends NewJunctionEvent {
 	@Override
 	public void execute(RoadMap things) {
 		if (things.getObject(id) != null) {
-			throw new SimulatorException("Ups, " + id + " already exists");
+			throw new SimulatorException("Ups, most crowed junction " + id + 
+					" already exists at time " + time);
 		}
 		//Hasta aqui es igual
 		things.addJunction(new MostCrowed(id,"mc"));

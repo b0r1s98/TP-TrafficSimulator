@@ -20,7 +20,6 @@ import es.ucm.fdi.ini.IniSection;
 public class Templates {
 	
 	private List<IniSection> list;
-	private static final String BASE = "src/main/resources/";
 
 	private static final Logger logger =
 			Logger.getLogger(Templates.class.getName());
@@ -40,7 +39,7 @@ public class Templates {
 	 */
 	private void loadTemplates() throws IOException {
 		logger.info("Loading templates file");
-		Ini ini = new Ini(BASE + "templates.ini");
+		Ini ini = new Ini(this.getClass().getClassLoader().getResourceAsStream("templates.ini"));
 		list = ini.getSections();
 	}
 	

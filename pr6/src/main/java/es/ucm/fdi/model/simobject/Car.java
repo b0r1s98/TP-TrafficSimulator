@@ -6,7 +6,7 @@ import java.util.Random;
 
 /**
  * 
- * A SimObject called Car.
+ * A type of vehicle that gets faulty with some probability.
  *
  */
 public class Car extends Vehicle {

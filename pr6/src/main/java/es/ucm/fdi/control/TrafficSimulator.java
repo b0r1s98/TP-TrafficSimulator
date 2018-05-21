@@ -25,6 +25,8 @@ public class TrafficSimulator {
 	private MultiTreeMap<Integer, Event> events;
 	private int timeCounter;
 	
+	private List<SimulatorListener> listeners = new ArrayList<>();
+	
 	private static final Logger logger =
 			Logger.getLogger(TrafficSimulator.class.getName());
 
@@ -93,8 +95,7 @@ public class TrafficSimulator {
 				
 				generateReport(out, null);
 			}
-		}
-		catch (SimulatorException e) {
+		} catch (SimulatorException e) {
 			logger.log(Level.WARNING, "Simulation error", e);
 			fireUpdateEvent(EventType.ERROR, e.getMessage());
 		}
@@ -178,8 +179,6 @@ public class TrafficSimulator {
 		this.objects = new RoadMap();
 		this.timeCounter = 0;
 	}
-
-	private List<SimulatorListener> listeners = new ArrayList<>();
 	
 	/**
 	 * Adds a SimulatorListener to the listeners list and notifies all listeners

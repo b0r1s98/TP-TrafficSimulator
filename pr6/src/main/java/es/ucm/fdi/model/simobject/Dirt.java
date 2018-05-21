@@ -6,7 +6,8 @@ import es.ucm.fdi.util.MultiTreeMap;
 
 /**
  * 
- * A SimObject called Dirt.
+ * A type of road where vehicles go slower
+ * if a vehicle gets faulty.
  *
  */
 public class Dirt extends Road {

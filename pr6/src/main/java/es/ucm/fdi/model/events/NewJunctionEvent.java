@@ -23,7 +23,8 @@ public class NewJunctionEvent extends Event {
 	@Override
 	public void execute(RoadMap things) {
 		if (things.getObject(id) != null) {
-			throw new SimulatorException("Ups, " + id + " already exists");
+			throw new SimulatorException("Ups, junction " + id + 
+					" already exists at time " + time);
 		}
 		things.addJunction(new Junction(id));
 	}

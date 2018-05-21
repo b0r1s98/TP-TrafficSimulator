@@ -22,7 +22,7 @@ import es.ucm.fdi.model.events.NewVehicleEvent;
 
 /**
  * 
- * Manage loading events into simulator.
+ * Manages loading events into simulator.
  *
  */
 public class Controller {

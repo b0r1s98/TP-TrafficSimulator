@@ -9,7 +9,8 @@ import es.ucm.fdi.util.MultiTreeMap;
 
 /**
  * 
- * A SimObject called Road.
+ * A road that has a length and connects two junctions,
+ * so vehicles can go over it.
  *
  */
 public class Road extends SimObject implements Describable{

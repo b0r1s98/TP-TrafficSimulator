@@ -12,7 +12,8 @@ import es.ucm.fdi.model.exceptions.SimulatorException;
 
 /**
  * 
- * A SimObject called Junction.
+ * A junction that connects roads and manages
+ * them using traffic lights.
  *
  */
 public class Junction extends SimObject implements Describable {

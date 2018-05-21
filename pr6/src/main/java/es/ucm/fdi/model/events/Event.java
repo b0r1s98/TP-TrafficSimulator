@@ -7,12 +7,12 @@ import es.ucm.fdi.model.Describable;
 
 /**
  * 
- * Class to create and add a certain SimObject
- * at a certain time to the simulation.
+ * Changes the simulation at a certain time, for example by
+ * adding or removing SimObjects
  *
  */
 public abstract class Event implements Describable{
-	private int time;
+	protected int time;
 	
 	/**
 	 * Class constructor
@@ -68,7 +68,7 @@ public abstract class Event implements Describable{
 		public abstract Event parse(Map<String, String> map);
 		
 		/**
-		 * Checks the id doesn't have incorrect characters
+		 * Checks the id does not have incorrect characters
 		 * 
 		 * @param id 	string to be checked
 		 * @return		whether is correct or not.

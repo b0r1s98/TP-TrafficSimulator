@@ -29,7 +29,7 @@ public class MakeVehicleFaultyEvent extends Event {
 		for (String vehicle : arrayVehicles) {
 			Vehicle unlucky = things.getVehicle(vehicle);
 			if (unlucky == null) {
-				throw new SimulatorException("Vehicle doesn't exist");
+				throw new SimulatorException("Vehicle " + vehicle + " does not exist at time " + time);
 			}
 			unlucky.setFaultyTime(faultyTime);
 		}

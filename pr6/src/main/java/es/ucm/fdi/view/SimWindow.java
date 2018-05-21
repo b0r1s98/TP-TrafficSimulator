@@ -7,8 +7,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +45,7 @@ import javax.swing.border.Border;
 import es.ucm.fdi.control.Controller;
 import es.ucm.fdi.control.RoadMap;
 import es.ucm.fdi.control.SimulatorAction;
+import es.ucm.fdi.control.Stepper;
 import es.ucm.fdi.control.TrafficSimulator.SimulatorListener;
 import es.ucm.fdi.control.TrafficSimulator.UpdateEvent;
 import es.ucm.fdi.ini.IniError;
@@ -59,7 +60,9 @@ import es.ucm.fdi.model.events.Event;
 public class SimWindow extends JPanel implements SimulatorListener{
 
 	private JFileChooser fc;
+	private Stepper stepper;
 	private JTextField time;
+	private JSpinner delay;
 	private JSpinner cicles;
 	private JCheckBoxMenuItem redirect;
 	private OutputStream outText;
@@ -75,6 +78,8 @@ public class SimWindow extends JPanel implements SimulatorListener{
 	private SimTable junctionsTable;
 	private GraphLayout graphRoadMap;
 	private JLabel statusBar;
+	
+	private boolean generateMessage;
 	
 	private Controller controller;
 	
@@ -113,9 +118,11 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		jframe.setContentPane(this);
 
 		fc = new JFileChooser();
+		prepareStepper();
 		createActions();
 		getAction(Command.Run).setEnabled(false);
 		getAction(Command.Reset).setEnabled(false);
+		getAction(Command.Stop).setEnabled(false);
 		jframe.setJMenuBar(createMenuBar());
 		add(createJToolBar(), BorderLayout.PAGE_START);
 		
@@ -133,6 +140,8 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		outText = new OutputStreamGUI(reports);
 		outNull = new OutputStreamNull();
 		
+		generateMessage = true;
+		
 		statusBar = new JLabel("Ready!");
 		statusBar.setBorder(BorderFactory.createLoweredBevelBorder());
 		jframe.add(statusBar, BorderLayout.PAGE_END);
@@ -142,6 +151,29 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		jframe.setVisible(true);
 		topSplit.setDividerLocation(.5);
 		bottomSplit.setDividerLocation(.5);
+	}
+	
+	/**
+	 * Creates Runnable(s) and Stepper to run simulator
+	 */
+	private void prepareStepper() {
+		Runnable before = () -> changeEnable(false);
+		Runnable during = () -> runSimulator();
+		Runnable after = () -> changeEnable(true);
+		
+ 		stepper = new Stepper(before, during, after);
+	}
+	
+	/**
+	 * Enables/disables menu buttons (and disables/enables Stop)
+	 */
+	private void changeEnable(boolean active) {
+		for(Command c : Command.values()) {
+			getAction(c).setEnabled((!c.equals(Command.Stop)) ? active : !active);
+		}
+		redirect.setEnabled(active);
+		delay.setEnabled(active);
+		cicles.setEnabled(active);
 	}
 	
 	/**
@@ -203,7 +235,7 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		panelIzq.add(new JScrollPane(eventsEditor));
 		panel.add(panelIzq);
 		initiatePopUpMenu();
-		eventsEditor.addMouseListener(new MouseListener() {
+		eventsEditor.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				showPopup(e);
@@ -218,18 +250,6 @@ public class SimWindow extends JPanel implements SimulatorListener{
 				if (e.isPopupTrigger() && eventsEditor.isEnabled()) {
 					botonDer.show(e.getComponent(), e.getX(), e.getY());
 				}
-			}
-
-			@Override
-			public void mouseClicked(MouseEvent e) {
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
 			}
 		});
 		
@@ -257,7 +277,7 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		LoadEvents("Load Events"), SaveEvents("Save Events"), ClearEvents("Clear Events"),
 		InsertEvents("Insert events"), Run("Run"), Reset("Reset"),
 		GenerateReports("Generate"), ClearReports("Clear"),
-		SaveReport("Save Report"), Exit("Exit");
+		SaveReport("Save Report"), Exit("Exit"), Stop("Stop");
 		
 		private String text;
 		
@@ -301,7 +321,11 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		
 		SimulatorAction play = new SimulatorAction(Command.Run,
 				"play.png", "Ejecutar el simulador", KeyEvent.VK_U,
-				"ctrl P", () -> runSimulator());
+				"ctrl P", () -> {
+					int ticks = ((SpinnerNumberModel) cicles.getModel()).getNumber().intValue();
+					int wait = ((SpinnerNumberModel) delay.getModel()).getNumber().intValue();
+					stepper.start(ticks, wait);
+				});
 		play.register(this);
 		
 		SimulatorAction reset = new SimulatorAction(Command.Reset,
@@ -334,6 +358,11 @@ public class SimWindow extends JPanel implements SimulatorListener{
 					System.exit(0);
 				});
 		quit.register(this);
+		
+		SimulatorAction stop = new SimulatorAction(Command.Stop,
+				"stop.png", "Detiene la ejecución del simulador", KeyEvent.VK_P,
+				"ctrl Y", () -> stepper.stop());
+		stop.register(this);
 	}
 
 	/**
@@ -399,15 +428,28 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		toolBar.addSeparator();
 		toolBar.add(getAction(Command.InsertEvents));
 		toolBar.add(getAction(Command.Run));
+		
+		toolBar.add(getAction(Command.Stop));
+		
 		toolBar.add(getAction(Command.Reset));
+		
+		toolBar.add(new JLabel(" Delay: "));
+		delay = new JSpinner();
+		SpinnerNumberModel sModel = ((SpinnerNumberModel) delay.getModel());
+		sModel.setMinimum(0);
+		sModel.setValue(0);
+		sModel.setStepSize(100);
+		delay.setToolTipText("Milisegundos de pausa entre cada vuelta del simulador");
+		Dimension d = delay.getPreferredSize();
+		d.width = 100;
+		delay.setPreferredSize(d);
+		toolBar.add(delay);
 		
 		toolBar.add(new JLabel(" Steps: "));
 		cicles = new JSpinner();
 		((SpinnerNumberModel) cicles.getModel()).setMinimum(1);
 		setTime(1);
 		cicles.setToolTipText("Número de ciclos que avanzará el simulador");
-		Dimension d = cicles.getPreferredSize();
-		d.width = 100;
 		cicles.setPreferredSize(d);
 		toolBar.add(cicles);
 		
@@ -615,6 +657,14 @@ public class SimWindow extends JPanel implements SimulatorListener{
 		ids.addAll(junctionsTable.getSelectedIds());
 		ids.addAll(roadsTable.getSelectedIds());
 		ids.addAll(vehiclesTable.getSelectedIds());
+		if(ids.isEmpty() && generateMessage) {
+			String s = "If you want specific reports, "
+					+ "you have to select the vehicles, roads or "
+					+ "junctions you want on the tables and press this button";
+			createAlert(s);
+			statusBar.setText(s);
+			generateMessage = false;
+		}
 		OutputStream out = redirect.isSelected() ? outText : outNull;
 		try {
 			reports.setText("");
@@ -645,13 +695,12 @@ public class SimWindow extends JPanel implements SimulatorListener{
 	}
 	
 	/**
-	 * Runs simulator with the corresponding ticks and outputstream
+	 * Runs simulator once with the corresponding outputstream
 	 */
 	private void runSimulator(){
-		int ticks = ((SpinnerNumberModel) cicles.getModel()).getNumber().intValue();
 		OutputStream out = redirect.isSelected() ? outText : outNull;
 		try {
-			controller.getSimulator().run(ticks, out);
+			controller.getSimulator().run(1, out);
 		} catch (IOException e) {
 			String msg = "Error generating report";
 			logger.log(Level.WARNING, msg + " (should not happen)", e);

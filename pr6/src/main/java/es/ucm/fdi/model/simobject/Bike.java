@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * 
- * A SimObject called Bike.
+ * A type of vehicle that gets faulty less times.
  *
  */
 public class Bike extends Vehicle {

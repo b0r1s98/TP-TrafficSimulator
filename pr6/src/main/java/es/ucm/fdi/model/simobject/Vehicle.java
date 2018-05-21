@@ -8,7 +8,8 @@ import es.ucm.fdi.model.Describable;
 
 /**
  * 
- * A SimObject called Vehicle.
+ * A vehicle that goes down an itinerary of junctions and has,
+ * for example, variable speed or can be faulty.
  *
  */
 public class Vehicle extends SimObject implements Describable {
@@ -64,8 +65,7 @@ public class Vehicle extends SimObject implements Describable {
 	public Junction getProxCruce() {
 		if (nextJunction != itinerary.size()) {
 			return itinerary.get(nextJunction);
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
@@ -155,8 +155,7 @@ public class Vehicle extends SimObject implements Describable {
 		out.put("faulty", "" + faultyTime);
 		if (!arrived) {
 			out.put("location", "(" + current.getId() + "," + location + ")");
-		}
-		else {
+		} else {
 			out.put("location", "arrived");
 		}
 	}

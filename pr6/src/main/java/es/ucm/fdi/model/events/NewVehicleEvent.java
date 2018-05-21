@@ -30,14 +30,16 @@ public class NewVehicleEvent extends Event {
 	@Override
 	public void execute(RoadMap things) {
 		if (things.getObject(id) != null) {
-			throw new SimulatorException("Ups, " + id + " already exists");
+			throw new SimulatorException("Ups, vehicle " + id + 
+					" already exists at time " + time);
 		}
 
 		List<Junction> it = new ArrayList<>();
 		for (String s : junctions) {
 			Junction step = things.getJunction(s);
 			if (step == null) {
-				throw new SimulatorException("Junction doesn't exist");
+				throw new SimulatorException("Junction " + s + " of vehicle " + id + 
+						" does not exist at time " + time);
 			}
 			it.add(step);
 		}

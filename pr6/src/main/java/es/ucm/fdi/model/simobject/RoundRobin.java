@@ -4,7 +4,7 @@ import java.util.Map;
 
 /**
  * 
- * A SimObject called RoundRobin.
+ * A type of junction where green traffic lights last more.
  *
  */
 public class RoundRobin extends Junction {

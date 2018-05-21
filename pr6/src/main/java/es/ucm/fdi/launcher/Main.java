@@ -28,6 +28,7 @@ import org.apache.commons.cli.ParseException;
 
 import es.ucm.fdi.control.Controller;
 import es.ucm.fdi.control.TrafficSimulator;
+import es.ucm.fdi.control.TrafficSimulator.EventType;
 import es.ucm.fdi.control.TrafficSimulator.UpdateEvent;
 import es.ucm.fdi.ini.Ini;
 import es.ucm.fdi.ini.IniError;
@@ -216,7 +217,7 @@ public class Main {
 				try {
 					out = new FileOutputStream(_outFile);
 				} catch (FileNotFoundException e) {
-					String s = "Output file doesn't exist, reports will be redirected to console.";
+					String s = "Output file does not exist, reports will be redirected to console.";
 					System.err.println(s);
 					logger.info(s);
 				}
@@ -230,13 +231,9 @@ public class Main {
 				
 				@Override
 				public void update(UpdateEvent ue, String error) {
-					switch(ue.getEvent()){
-					case ERROR:
+					if(ue.getEvent().equals(EventType.ERROR)) {
 						System.err.print("Simulation error: ");
 						System.err.println(error);
-						break;
-					default:
-						break;
 					}
 				}
 			});
@@ -245,7 +242,7 @@ public class Main {
 			try {
 				in = new FileInputStream(_inFile);
 			} catch (FileNotFoundException e) {
-				throw new Exception("Input file doesn't exist", e);
+				throw new Exception("Input file does not exist", e);
 			}
 			
 			try {
@@ -283,8 +280,7 @@ public class Main {
 		setupLogging(Level.INFO);
 		if("gui".equals(_mode)) {
 			startGUIMode();
-		}
-		else {
+		} else {
 			startBatchMode();
 		}
 	}

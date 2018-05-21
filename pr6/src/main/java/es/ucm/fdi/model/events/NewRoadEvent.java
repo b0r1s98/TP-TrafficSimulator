@@ -33,14 +33,15 @@ public class NewRoadEvent extends Event {
 	@Override
 	public void execute(RoadMap things) {
 		if (things.getObject(id) != null) {
-			throw new SimulatorException("Ups, " + id + " already exists");
+			throw new SimulatorException("Ups, road " + id + 
+					" already exists at time " + time);
 		}
 
 		Junction a = things.getJunction(src);
 		Junction b = things.getJunction(dest);
 		if (a == null || b == null) {
-			throw new SimulatorException("A junction is missing: " + id + "=("
-					+ src + "," + dest + ")");
+			throw new SimulatorException("A junction is missing: road " + id 
+					+ "=(" + src + "," + dest + ") at time " + time);
 		}
 
 		Road r = new Road(id, length, maxSpeed, a, b);

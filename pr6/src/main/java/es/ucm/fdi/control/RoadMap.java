@@ -36,8 +36,7 @@ public class RoadMap {
 		SimObject obj = map.get(id);
 		if (obj instanceof Vehicle) {
 			return (Vehicle) obj;
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
@@ -52,8 +51,7 @@ public class RoadMap {
 		SimObject obj = map.get(id);
 		if (obj instanceof Road) {
 			return (Road) obj;
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
@@ -68,8 +66,7 @@ public class RoadMap {
 		SimObject obj = map.get(id);
 		if (obj instanceof Junction) {
 			return (Junction) obj;
-		}
-		else {
+		} else {
 			return null;
 		}
 	}

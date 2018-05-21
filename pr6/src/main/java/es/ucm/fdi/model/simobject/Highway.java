@@ -6,7 +6,7 @@ import es.ucm.fdi.util.MultiTreeMap;
 
 /**
  * 
- * A SimObject called Highway.
+ * A type of road with a variable number of lanes.
  *
  */
 public class Highway extends Road {

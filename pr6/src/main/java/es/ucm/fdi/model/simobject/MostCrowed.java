@@ -4,7 +4,8 @@ import java.util.Map;
 
 /**
  * 
- * A SimObject called MostCrowed.
+ * A type of junction that manages traffic lights giving 
+ * priority to those incoming roads with more vehicles waiting.
  *
  */
 public class MostCrowed extends Junction {
